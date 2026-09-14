@@ -172,7 +172,7 @@
     const WAIT_SECONDS = 4;
     const RECORD_SECONDS = 4;
     const TRANSCRIPTION_MODEL = "voxtral-mini-latest";
-    const COMPLETION_MODEL = "mistral-small-latest";
+    const RHYME_AGENT_ID = "ag_01a0a1b2d39e7676a738829559ea16a0";
 
     const apiKeyInput = document.getElementById("apiKey");
     const startButton = document.getElementById("startButton");
@@ -354,7 +354,7 @@
         if (!isCurrentRun(thisRun)) return null;
         statusElement.textContent = "CHOOSING RHYME";
         response = await fetch(
-        "https://api.mistral.ai/v1/chat/completions",
+        "https://api.mistral.ai/v1/conversations",
         {
           method: "POST",
           headers: {
@@ -362,18 +362,13 @@
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            model: COMPLETION_MODEL,
-            messages: [
+            agent_id: RHYME_AGENT_ID,
+            inputs: [
               {
                 role: "user",
                 content: prompt
               }
-            ],
-            response_format: {
-              type: "json_object"
-            },
-            temperature: 0,
-            max_tokens: 60
+            ]
           })
         }
       );
@@ -393,9 +388,18 @@
       }
 
       const result = await response.json();
-      const responseText = result.choices?.[0]?.message?.content;
+      const messages = (result.outputs || []).filter(
+        output => output.type === "message.output"
+      );
+      const content = messages[messages.length - 1]?.content;
+      const responseText = typeof content === "string"
+        ? content
+        : Array.isArray(content)
+          ? content.filter(chunk => chunk.type === "text")
+              .map(chunk => chunk.text || "").join("")
+          : null;
 
-      if (typeof responseText !== "string") {
+      if (typeof responseText !== "string" || !responseText.trim()) {
         throw new Error("The rhyme model returned no usable answer.");
       }
 
@@ -405,6 +409,11 @@
         parsed = JSON.parse(responseText);
       } catch {
         throw new Error("The rhyme model returned invalid JSON.");
+      }
+
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) ||
+          (!("key" in parsed) && !("word" in parsed))) {
+        throw new Error("The rhyme agent returned JSON without a key or word field.");
       }
 
       if (!parsed.key && !parsed.word) {
