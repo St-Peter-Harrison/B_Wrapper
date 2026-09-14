@@ -1,10 +1,385 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Beastie Rap</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beastie Rap Test</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 20px;
+      text-align: center;
+    }
+
+    input {
+      width: 90%;
+      padding: 12px;
+      font-size: 16px;
+      margin-bottom: 15px;
+    }
+
+    button {
+      padding: 14px 24px;
+      font-size: 18px;
+      margin: 5px;
+    }
+
+    #status {
+      font-size: 28px;
+      font-weight: bold;
+      margin-top: 30px;
+    }
+
+    #countdown {
+      font-size: 50px;
+      margin: 15px;
+    }
+
+    #transcripts {
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    .transcript {
+      padding: 10px;
+      margin-bottom: 8px;
+      background: #eee;
+      border-radius: 6px;
+    }
+
+    .error {
+      color: red;
+    }
+  </style>
 </head>
+
 <body>
+
   <h1>Beastie Rap Test</h1>
-  <p>If you can see this, GitHub Pages is working.</p>
+
+  <input
+    id="apiKey"
+    type="password"
+    placeholder="Paste Mistral API key"
+    autocomplete="off"
+  >
+
+  <br>
+
+  <button id="startButton">Start</button>
+  <button id="stopButton" disabled>Stop</button>
+
+  <div id="status">Stopped</div>
+  <div id="countdown"></div>
+
+  <div id="transcripts">
+    <h2>Transcripts</h2>
+  </div>
+
+
+<script>
+
+const WAIT_SECONDS = 4;
+const RECORD_SECONDS = 4;
+
+let running = false;
+let stream = null;
+let currentRecorder = null;
+let runNumber = 0;
+
+
+// ----------------------------
+// Buttons
+// ----------------------------
+
+document.getElementById("startButton").addEventListener("click", startApp);
+document.getElementById("stopButton").addEventListener("click", stopApp);
+
+
+async function startApp() {
+
+  const apiKey = document.getElementById("apiKey").value.trim();
+
+  if (!apiKey) {
+    alert("Paste your Mistral API key first.");
+    return;
+  }
+
+  try {
+
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: true
+    });
+
+  } catch (error) {
+
+    alert("Could not access microphone: " + error.message);
+    return;
+  }
+
+
+  if (!MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+
+    alert(
+      "This browser cannot record WebM/Opus audio. " +
+      "Make sure your iPhone/iOS is reasonably up to date."
+    );
+
+    stream.getTracks().forEach(track => track.stop());
+    return;
+  }
+
+
+  running = true;
+  runNumber++;
+
+  document.getElementById("startButton").disabled = true;
+  document.getElementById("stopButton").disabled = false;
+
+  runLoop(runNumber);
+}
+
+
+function stopApp() {
+
+  running = false;
+  runNumber++;
+
+  if (currentRecorder && currentRecorder.state === "recording") {
+    currentRecorder.stop();
+  }
+
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+  }
+
+  document.getElementById("status").textContent = "Stopped";
+  document.getElementById("countdown").textContent = "";
+
+  document.getElementById("startButton").disabled = false;
+  document.getElementById("stopButton").disabled = true;
+}
+
+
+// ----------------------------
+// Main loop
+// ----------------------------
+
+async function runLoop(thisRun) {
+
+  while (running && thisRun === runNumber) {
+
+    await countdown("WAITING", WAIT_SECONDS, thisRun);
+
+    if (!running || thisRun !== runNumber) {
+      break;
+    }
+
+    const audioBlob = await recordAudio(RECORD_SECONDS, thisRun);
+
+    if (!audioBlob) {
+      break;
+    }
+
+    // Do NOT wait for transcription.
+    // Start processing it in the background.
+    transcribeAudio(audioBlob);
+
+  }
+}
+
+
+// ----------------------------
+// Waiting countdown
+// ----------------------------
+
+async function countdown(label, seconds, thisRun) {
+
+  document.getElementById("status").textContent = label;
+
+  for (let i = seconds; i > 0; i--) {
+
+    if (!running || thisRun !== runNumber) {
+      return;
+    }
+
+    document.getElementById("countdown").textContent = i;
+
+    await sleep(1000);
+  }
+
+  document.getElementById("countdown").textContent = "";
+}
+
+
+// ----------------------------
+// Record microphone
+// ----------------------------
+
+function recordAudio(seconds, thisRun) {
+
+  return new Promise((resolve) => {
+
+    const chunks = [];
+
+    currentRecorder = new MediaRecorder(stream, {
+      mimeType: "audio/webm;codecs=opus"
+    });
+
+    currentRecorder.ondataavailable = event => {
+
+      if (event.data.size > 0) {
+        chunks.push(event.data);
+      }
+
+    };
+
+
+    currentRecorder.onstop = () => {
+
+      if (chunks.length === 0) {
+        resolve(null);
+        return;
+      }
+
+      const blob = new Blob(chunks, {
+        type: "audio/webm"
+      });
+
+      resolve(blob);
+    };
+
+
+    currentRecorder.start();
+
+    document.getElementById("status").textContent = "RECORDING";
+
+
+    let remaining = seconds;
+
+    document.getElementById("countdown").textContent = remaining;
+
+    const displayTimer = setInterval(() => {
+
+      remaining--;
+
+      if (remaining > 0) {
+        document.getElementById("countdown").textContent = remaining;
+      }
+
+    }, 1000);
+
+
+    setTimeout(() => {
+
+      clearInterval(displayTimer);
+
+      document.getElementById("countdown").textContent = "";
+
+      if (
+        currentRecorder &&
+        currentRecorder.state === "recording"
+      ) {
+        currentRecorder.stop();
+      }
+
+    }, seconds * 1000);
+
+  });
+}
+
+
+// ----------------------------
+// Send to Mistral
+// ----------------------------
+
+async function transcribeAudio(audioBlob) {
+
+  const apiKey = document.getElementById("apiKey").value.trim();
+
+  const formData = new FormData();
+
+  formData.append("model", "voxtral-mini-latest");
+  formData.append("language", "en");
+  formData.append("file", audioBlob, "recording.webm");
+
+
+  try {
+
+    const response = await fetch(
+      "https://api.mistral.ai/v1/audio/transcriptions",
+      {
+        method: "POST",
+
+        headers: {
+          "Authorization": "Bearer " + apiKey
+        },
+
+        body: formData
+      }
+    );
+
+
+    if (!response.ok) {
+
+      const errorText = await response.text();
+
+      throw new Error(
+        response.status + " - " + errorText
+      );
+    }
+
+
+    const result = await response.json();
+
+    addTranscript(result.text);
+
+
+  } catch (error) {
+
+    addError(error.message);
+
+  }
+
+}
+
+
+// ----------------------------
+// Display results
+// ----------------------------
+
+function addTranscript(text) {
+
+  const div = document.createElement("div");
+
+  div.className = "transcript";
+  div.textContent = text;
+
+  document.getElementById("transcripts").appendChild(div);
+}
+
+
+function addError(text) {
+
+  const div = document.createElement("div");
+
+  div.className = "transcript error";
+  div.textContent = "ERROR: " + text;
+
+  document.getElementById("transcripts").appendChild(div);
+}
+
+
+function sleep(ms) {
+
+  return new Promise(resolve => setTimeout(resolve, ms));
+
+}
+
+</script>
+
 </body>
 </html>
