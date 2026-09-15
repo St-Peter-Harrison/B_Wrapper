@@ -145,7 +145,7 @@
     id="apiKey"
     type="password"
     placeholder="Paste Mistral API key"
-    autocomplete="off"
+    autocomplete="on"
   >
 
   <div style="margin-bottom: 12px">
@@ -173,6 +173,7 @@
   <button id="startButton">Start Game</button>
   <button id="stopButton" disabled>Stop</button>
   <button id="redoButton" hidden>Redo</button>
+  <button id="wrongAnswerButton" hidden>That answer was wrong</button>
   <p>Three beeps count you in. Start speaking on the higher third beep.</p>
 
   <section class="card" aria-live="polite">
@@ -233,6 +234,9 @@
     let currentName = null;
     let usedRhymeKeys = [];
     let usedRhymeWords = [];
+    let retrySnapshot = null;
+    const wrongAnswerButton = document.getElementById("wrongAnswerButton");
+    wrongAnswerButton.addEventListener("click", retryLastTurn);
 
     if (window.BEASTIE_RAP_DATA) {
       const sortedNames = [...new Set(BEASTIE_RAP_DATA.names.map(item => item.name))]
@@ -264,7 +268,7 @@
       if (document.hidden && running) stopApp();
     });
 
-    async function startRound(redo = false) {
+    async function startRound(redo = false, retry = false) {
       if (running) return;
       const apiKey = apiKeyInput.value.trim();
 
@@ -286,15 +290,19 @@
         currentName = BEASTIE_RAP_DATA.getNameRecord(nameSelection.value)
           || BEASTIE_RAP_DATA.pickRandomName();
       }
-      usedRhymeKeys = [];
-      usedRhymeWords = [];
+      if (!retry) {
+        usedRhymeKeys = [];
+        usedRhymeWords = [];
+        retrySnapshot = null;
+        historyItemsElement.innerHTML = "";
+      }
+      wrongAnswerButton.hidden = true;
 
       currentNameElement.textContent = currentName.name;
-      historyItemsElement.innerHTML = "";
       renderUsedRhymes();
       setControls(true);
 
-      addLog("computer", "The name is " + currentName.name + ".");
+      if (!retry) addLog("computer", "The name is " + currentName.name + ".");
 
       try {
         statusElement.textContent = "STARTING";
@@ -306,7 +314,7 @@
         const clock = beatClock;
         // Unlock both audio APIs directly from the Start tap.
         const prepared = clock.prepare();
-        const announced = speakText("The name is " + currentName.name + ".");
+        const announced = retry ? Promise.resolve() : speakText("The name is " + currentName.name + ".");
         const microphone = navigator.mediaDevices.getUserMedia({ audio: {
           echoCancellation: true, noiseSuppression: true
         }}).then(value => {
@@ -319,7 +327,7 @@
           throw new Error("This browser cannot record WebM/Opus audio.");
         }
         clock.start();
-        const firstPlayerStart = await computerBar("Name: " + currentName.name + ".", thisRun);
+        const firstPlayerStart = await computerBar(retry ? "" : "Name: " + currentName.name + ".", thisRun);
         if (firstPlayerStart === null) return;
         await runGame(thisRun, firstPlayerStart);
       } catch (error) {
@@ -333,16 +341,16 @@
       const clock = beatClock;
       const active = () => isCurrentRun(thisRun);
       const start = clock.nextBoundary();
-      statusElement.textContent = "COMPUTER UP NEXT";
+      statusElement.textContent = text ? "COMPUTER UP NEXT" : "GET READY";
       const playerStart = start + clock.period;
       clock.cue(playerStart - 2, 660);
       clock.cue(playerStart - 1, 660);
       clock.cue(playerStart, 990);
       if (!await clock.waitUntil(start, active)) return null;
       if (clock.context.currentTime - start > 0.12) throw new Error("Timing interrupted. Start a new round.");
-      statusElement.textContent = "COMPUTER — YOU’RE NEXT";
+      statusElement.textContent = text ? "COMPUTER — YOU’RE NEXT" : "GET READY — YOU’RE NEXT";
       // A short announcement leaves room before the microphone opens.
-      speakText(text);
+      if (text) speakText(text);
       if (!await clock.waitUntil(start + clock.period - 0.10, active, true)) return null;
       cancelSpeech();
       if (!await clock.waitUntil(start + clock.period, active, true)) return null;
@@ -354,9 +362,17 @@
         if (beatClock.context.currentTime - playerStart > 0.12) {
           throw new Error("Timing interrupted. Start a new round.");
         }
+        wrongAnswerButton.hidden = true;
+        const turnSnapshot = {
+          keys: [...usedRhymeKeys],
+          words: [...usedRhymeWords],
+          historyLength: historyItemsElement.children.length
+        };
         const audioBlob = await recordAudio(playerStart + beatClock.period, thisRun);
         if (!audioBlob || !isCurrentRun(thisRun)) return;
 
+        retrySnapshot = turnSnapshot;
+        wrongAnswerButton.hidden = false;
         statusElement.textContent = "TRANSCRIBING";
         const transcript = stripEndingPunctuation(await transcribeAudio(audioBlob));
         if (!isCurrentRun(thisRun)) return;
@@ -660,7 +676,25 @@
       setControls(false);
     }
 
+    function retryLastTurn() {
+      if (!retrySnapshot) return;
+      const snapshot = retrySnapshot;
+      // Invalidate in-flight requests, recording, speech, and queued beeps.
+      stopApp();
+      usedRhymeKeys = [...snapshot.keys];
+      usedRhymeWords = [...snapshot.words];
+      while (historyItemsElement.children.length > snapshot.historyLength) {
+        historyItemsElement.lastElementChild.remove();
+      }
+      retrySnapshot = null;
+      wrongAnswerButton.hidden = true;
+      renderUsedRhymes();
+      // Reuse the name and restored rhymes; only play a count-in bar.
+      startRound(true, true);
+    }
+
     function setControls(isRunning) {
+      if (!isRunning) wrongAnswerButton.hidden = !retrySnapshot;
       nameSelection.disabled = isRunning;
       document.getElementById("suggestionSection").hidden = isRunning;
       updateSuggestionLink();
@@ -745,3 +779,4 @@
   </script>
 </body>
 </html>
+
