@@ -166,6 +166,7 @@
   </details>
   <button id="startButton">Start Round</button>
   <button id="stopButton" disabled>Stop</button>
+  <button id="redoButton" hidden>Redo</button>
   <p>Three beeps count you in. Start speaking on the higher third beep.</p>
 
   <section class="card" aria-live="polite">
@@ -177,6 +178,10 @@
 
     <div class="label">Used rhymes</div>
     <div id="usedRhymes">None</div>
+    <div id="unusedSection" hidden style="margin-top: 20px">
+      <div class="label">Unused rhymes</div>
+      <div id="unusedRhymes" style="margin-top: 8px; line-height: 1.5"></div>
+    </div>
   </section>
 
   <section id="history">
@@ -216,13 +221,14 @@
     let usedRhymeKeys = [];
     let usedRhymeWords = [];
 
-    startButton.addEventListener("click", startRound);
+    startButton.addEventListener("click", () => startRound(false));
+    document.getElementById("redoButton").addEventListener("click", () => startRound(true));
     stopButton.addEventListener("click", stopApp);
     document.addEventListener("visibilitychange", () => {
       if (document.hidden && running) stopApp();
     });
 
-    async function startRound() {
+    async function startRound(redo = false) {
       if (running) return;
       const apiKey = apiKeyInput.value.trim();
 
@@ -240,7 +246,7 @@
       runNumber += 1;
       const thisRun = runNumber;
 
-      currentName = BEASTIE_RAP_DATA.pickRandomName();
+      if (!redo || !currentName) currentName = BEASTIE_RAP_DATA.pickRandomName();
       usedRhymeKeys = [];
       usedRhymeWords = [];
 
@@ -625,6 +631,18 @@
     }
 
     function setControls(isRunning) {
+      document.getElementById("redoButton").hidden = isRunning || !currentName;
+      document.getElementById("redoButton").disabled = isRunning;
+      document.getElementById("unusedSection").hidden = isRunning || !currentName;
+      if (!isRunning && currentName) {
+        usedRhymesElement.textContent = usedRhymeWords.length
+          ? usedRhymeWords.map(word => BEASTIE_RAP_DATA.getHomophones(word).join(" / ")).join(", ")
+          : "None";
+        const unused = BEASTIE_RAP_DATA.getRhymeChoicesForName(currentName.name, usedRhymeKeys);
+        document.getElementById("unusedRhymes").textContent = unused.length
+          ? unused.map(choice => choice.options.join(" / ")).join(", ")
+          : "None — you used them all!";
+      }
       document.getElementById("turnSeconds").disabled = isRunning;
       document.getElementById("trackOffset").disabled = isRunning;
       document.getElementById("speed").disabled = isRunning;
