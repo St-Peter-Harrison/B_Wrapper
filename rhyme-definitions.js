@@ -614,7 +614,6 @@ compile|collect and arrange; translate computer code
 crocodile|large aquatic reptile with powerful jaws
 defile|pollute or desecrate
 denial|refusal to accept or acknowledge
-dile|unclear original list entry; no confirmed English meaning
 fertile|able to produce offspring or crops
 file|document collection; abrasive tool; submit papers
 francophile|person who loves France or French culture
@@ -723,7 +722,7 @@ pike|long spear; freshwater fish
 sike|just kidding, slang
 psych|just kidding; mentally prepare, as in psych up
 spike|sharp point; sudden increase; volleyball hit
-stike|unclear original list entry; possibly a typo
+stike|steak said in an exaggerated Australian accent
 strike|hit; work stoppage; bowling success
 trike|three-wheeled cycle
 tyke|small child or mischievous youngster
@@ -985,7 +984,7 @@ nil|zero; nothing
 pill|small solid dose of medicine
 quill|large feather used as a pen; porcupine spine
 refill|fill again
-sil|unclear original list entry; possibly intended as sill
+sill|horizontal ledge at the bottom of a window
 shill|person secretly paid to promote something
 skill|learned ability
 spill|accidentally pour out
@@ -995,7 +994,7 @@ til|until, shortened spelling
 till|until; cash drawer; cultivate soil
 'til|shortened spelling of until
 treadmill|exercise machine with a moving walking belt
-tril|unclear original list entry; possibly intended as trill
+trill|rapid alternation between two musical notes; warbling bird sound
 thrill|strong excitement
 until|up to a particular time
 `.trim().split('\n').map(line => {
