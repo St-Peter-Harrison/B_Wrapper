@@ -182,6 +182,12 @@
       <option value="" selected>Random</option>
     </select>
   </div>
+  <div style="margin: 12px 0">
+    <label for="noComputerMode">
+      <input id="noComputerMode" type="checkbox" autocomplete="off" style="width: auto; margin: 0 6px 0 0">
+      No Computer Mode
+    </label>
+  </div>
   <button id="startButton" type="submit" form="apiKeyForm">Start Game</button>
   <button id="stopButton" disabled>Stop</button>
   <button id="redoButton" hidden>Redo</button>
@@ -265,6 +271,8 @@
 
     const startButton = document.getElementById("startButton");
     const nameSelection = document.getElementById("nameSelection");
+    const noComputerMode = document.getElementById("noComputerMode");
+    noComputerMode.checked = false;
     const stopButton = document.getElementById("stopButton");
     const currentNameElement = document.getElementById("currentName");
     const statusElement = document.getElementById("status");
@@ -375,7 +383,7 @@
           throw new Error("This browser cannot record WebM/Opus audio.");
         }
         clock.start();
-        const firstPlayerStart = await computerBar(retry ? "" : "Name: " + currentName.name + ".", thisRun);
+        const firstPlayerStart = await computerBar(retry || noComputerMode.checked ? "" : "Name: " + currentName.name + ".", thisRun);
         if (firstPlayerStart === null) return;
         await runGame(thisRun, firstPlayerStart);
       } catch (error) {
@@ -459,6 +467,17 @@
         addLog("player", "Your rhyme: " + playerChoice.word);
         await speakText(playerChoice.word);
         if (!isCurrentRun(thisRun)) return;
+
+        if (noComputerMode.checked) {
+          const remaining = BEASTIE_RAP_DATA.getRhymeChoicesForName(currentName.name, usedRhymeKeys);
+          if (remaining.length === 0) {
+            finishRound("YOU CLEARED THE GROUP");
+            return;
+          }
+          playerStart = await computerBar("", thisRun);
+          if (playerStart === null) return;
+          continue;
+        }
 
         const computerChoice = BEASTIE_RAP_DATA.pickRandomRhyme(
           currentName.name,
@@ -746,6 +765,7 @@
       changeKeyButton.disabled = isRunning;
       if (!isRunning) wrongAnswerButton.hidden = !retrySnapshot;
       nameSelection.disabled = isRunning;
+      noComputerMode.disabled = isRunning;
       document.getElementById("suggestionSection").hidden = isRunning;
       updateSuggestionLink();
       document.getElementById("redoButton").hidden = isRunning || !currentName;
