@@ -1149,6 +1149,8 @@
       "Rain",
       "Refrain",
       "Sane",
+    "Insane",
+    "Zayn",
       "Slain",
       "Sustain",
       "Shane",
@@ -1703,6 +1705,10 @@
     return record ? record.id : normalize(value);
   }
 
+  function getDefinition(value) {
+    return window.BEASTIE_RHYME_DEFINITIONS?.[normalize(value)] || "";
+  }
+
   function getHomophones(value) {
     const record = getHomophoneRecord(value);
 
@@ -1836,6 +1842,7 @@
     getGroupForName,
     getHomophoneRecord,
     getHomophones,
+    getDefinition,
     getRhymeKey,
     getRhymeChoicesForName,
     getRhymesForName,
