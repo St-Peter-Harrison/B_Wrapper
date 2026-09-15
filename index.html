@@ -141,12 +141,24 @@
 <body>
   <h1>Beastie Rap Practice</h1>
 
-  <input
-    id="apiKey"
-    type="password"
-    placeholder="Paste Mistral API key"
-    autocomplete="on"
-  >
+  <div id="credentialArea">
+    <form id="apiKeyForm" method="post" autocomplete="on" onsubmit="return false">
+      <label for="apiKey">Mistral API key</label>
+      <input
+        id="apiKey"
+        name="password"
+        type="password"
+        placeholder="Paste Mistral API key"
+        autocomplete="current-password"
+        autocapitalize="none"
+        spellcheck="false"
+        required
+      >
+    </form>
+    <p id="keyReady" hidden>API key connected.
+      <button id="changeKeyButton" type="button">Change key</button>
+    </p>
+  </div>
 
   <div style="margin-bottom: 12px">
     <label for="speed">Speed:</label>
@@ -170,7 +182,7 @@
       <option value="" selected>Random</option>
     </select>
   </div>
-  <button id="startButton">Start Game</button>
+  <button id="startButton" type="submit" form="apiKeyForm">Start Game</button>
   <button id="stopButton" disabled>Stop</button>
   <button id="redoButton" hidden>Redo</button>
   <button id="wrongAnswerButton" hidden>That answer was wrong</button>
@@ -218,6 +230,39 @@
     const RHYME_AGENT_ID = "ag_01a0a1b2d39e7676a738829559ea16a0";
 
     const apiKeyInput = document.getElementById("apiKey");
+    const keyForm = document.getElementById("apiKeyForm");
+    const credentialArea = document.getElementById("credentialArea");
+    const keyReady = document.getElementById("keyReady");
+    const changeKeyButton = document.getElementById("changeKeyButton");
+    let submittedKey = null;
+
+    keyForm.addEventListener("submit", event => {
+      event.preventDefault();
+      if (running) return;
+      submittedKey = apiKeyInput.value.trim();
+      startRound(false);
+    });
+
+    changeKeyButton.addEventListener("click", () => {
+      if (running) return;
+      submittedKey = null;
+      credentialArea.prepend(keyForm);
+      keyReady.hidden = true;
+      apiKeyInput.focus();
+    });
+
+    function confirmKeyAccepted(key) {
+      if (!keyForm.isConnected || submittedKey !== key ||
+          apiKeyInput.value.trim() !== key) return;
+      // A successful authenticated request completes the credential form.
+      // Keep the input object in memory for existing API calls.
+      submittedKey = null;
+      keyForm.remove();
+      keyReady.hidden = false;
+      // Password managers use form removal plus navigation as a success cue.
+      history.replaceState(history.state, "", location.href);
+    }
+
     const startButton = document.getElementById("startButton");
     const nameSelection = document.getElementById("nameSelection");
     const stopButton = document.getElementById("stopButton");
@@ -261,7 +306,10 @@
     nameSelection.addEventListener("change", updateSuggestionLink);
     updateSuggestionLink();
 
-    startButton.addEventListener("click", () => startRound(false));
+    startButton.addEventListener("click", () => {
+      // Once connected, the form is detached and Start launches directly.
+      if (!keyForm.isConnected) startRound(false);
+    });
     document.getElementById("redoButton").addEventListener("click", () => startRound(true));
     stopButton.addEventListener("click", stopApp);
     document.addEventListener("visibilitychange", () => {
@@ -573,6 +621,7 @@
       }
 
       const result = await response.json();
+      confirmKeyAccepted(apiKey);
       return String(result.text ?? "");
     }
 
@@ -694,6 +743,7 @@
     }
 
     function setControls(isRunning) {
+      changeKeyButton.disabled = isRunning;
       if (!isRunning) wrongAnswerButton.hidden = !retrySnapshot;
       nameSelection.disabled = isRunning;
       document.getElementById("suggestionSection").hidden = isRunning;
