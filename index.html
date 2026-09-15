@@ -189,8 +189,8 @@
     <div id="historyItems"></div>
   </section>
 
-  <script src="rhyme-definitions.js?v=1"></script>
-  <script src="beastie-rap-data.js?v=definitions1"></script>
+  <script src="rhyme-definitions.js?v=2"></script>
+  <script src="beastie-rap-data.js?v=definitions2"></script>
   <script src="song-part-0.js"></script>
   <script src="song-part-1.js"></script>
   <script src="song-part-2.js"></script>
@@ -320,7 +320,7 @@
         if (!audioBlob || !isCurrentRun(thisRun)) return;
 
         statusElement.textContent = "TRANSCRIBING";
-        const transcript = await transcribeAudio(audioBlob);
+        const transcript = stripEndingPunctuation(await transcribeAudio(audioBlob));
         if (!isCurrentRun(thisRun)) return;
 
         if (!transcript.trim()) {
@@ -685,6 +685,10 @@
         finishSpeech = finish;
         window.speechSynthesis.speak(utterance);
       });
+    }
+
+    function stripEndingPunctuation(value) {
+      return String(value ?? "").trim().replace(/[\p{P}\s]+$/gu, "");
     }
 
     function normalize(value) {
