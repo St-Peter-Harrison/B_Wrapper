@@ -190,6 +190,11 @@
     </div>
   </section>
 
+  <section id="suggestionSection" class="card">
+    <a id="suggestRhymeLink" href="https://docs.google.com/forms/d/e/1FAIpQLSclop2eNjCwKijJAAHHcuzGIvZwgNXbPwSpWlDAqEx39skEWg/viewform?usp=pp_url" target="_blank" rel="noopener noreferrer" style="color: var(--blue); font-weight: 700; display: inline-block; padding: 10px">Suggest a missing rhyme ↗</a>
+    <p style="margin: 4px 0; color: var(--muted)">Opens a form in a new tab. Suggestions are reviewed before being added.</p>
+  </section>
+
   <section id="history">
     <h2>Round history</h2>
     <div id="historyItems"></div>
@@ -241,6 +246,16 @@
     }
     // Reset on a page load; preserve the selection throughout rounds.
     nameSelection.value = "";
+
+    function updateSuggestionLink() {
+      const url = new URL("https://docs.google.com/forms/d/e/1FAIpQLSclop2eNjCwKijJAAHHcuzGIvZwgNXbPwSpWlDAqEx39skEWg/viewform");
+      url.searchParams.set("usp", "pp_url");
+      const name = currentName?.name || nameSelection.value;
+      if (name) url.searchParams.set("entry.304793301", name);
+      document.getElementById("suggestRhymeLink").href = url.toString();
+    }
+    nameSelection.addEventListener("change", updateSuggestionLink);
+    updateSuggestionLink();
 
     startButton.addEventListener("click", () => startRound(false));
     document.getElementById("redoButton").addEventListener("click", () => startRound(true));
@@ -647,6 +662,8 @@
 
     function setControls(isRunning) {
       nameSelection.disabled = isRunning;
+      document.getElementById("suggestionSection").hidden = isRunning;
+      updateSuggestionLink();
       document.getElementById("redoButton").hidden = isRunning || !currentName;
       document.getElementById("redoButton").disabled = isRunning;
       document.getElementById("unusedSection").hidden = isRunning || !currentName;
