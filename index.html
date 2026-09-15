@@ -164,7 +164,13 @@
     <input id="trackOffset" type="number" min="0" max="10" step="0.01" value="0.29">
     <small>Adjust between rounds if cues drift or start between beats.</small>
   </details>
-  <button id="startButton">Start Round</button>
+  <div style="margin-bottom: 12px">
+    <label for="nameSelection">Name:</label>
+    <select id="nameSelection" autocomplete="off" style="font-size: 16px; padding: 8px; max-width: 100%">
+      <option value="" selected>Random</option>
+    </select>
+  </div>
+  <button id="startButton">Start Game</button>
   <button id="stopButton" disabled>Stop</button>
   <button id="redoButton" hidden>Redo</button>
   <p>Three beeps count you in. Start speaking on the higher third beep.</p>
@@ -207,6 +213,7 @@
 
     const apiKeyInput = document.getElementById("apiKey");
     const startButton = document.getElementById("startButton");
+    const nameSelection = document.getElementById("nameSelection");
     const stopButton = document.getElementById("stopButton");
     const currentNameElement = document.getElementById("currentName");
     const statusElement = document.getElementById("status");
@@ -221,6 +228,19 @@
     let currentName = null;
     let usedRhymeKeys = [];
     let usedRhymeWords = [];
+
+    if (window.BEASTIE_RAP_DATA) {
+      const sortedNames = [...new Set(BEASTIE_RAP_DATA.names.map(item => item.name))]
+        .sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" }));
+      sortedNames.forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        nameSelection.appendChild(option);
+      });
+    }
+    // Reset on a page load; preserve the selection throughout rounds.
+    nameSelection.value = "";
 
     startButton.addEventListener("click", () => startRound(false));
     document.getElementById("redoButton").addEventListener("click", () => startRound(true));
@@ -247,7 +267,10 @@
       runNumber += 1;
       const thisRun = runNumber;
 
-      if (!redo || !currentName) currentName = BEASTIE_RAP_DATA.pickRandomName();
+      if (!redo || !currentName) {
+        currentName = BEASTIE_RAP_DATA.getNameRecord(nameSelection.value)
+          || BEASTIE_RAP_DATA.pickRandomName();
+      }
       usedRhymeKeys = [];
       usedRhymeWords = [];
 
@@ -623,6 +646,7 @@
     }
 
     function setControls(isRunning) {
+      nameSelection.disabled = isRunning;
       document.getElementById("redoButton").hidden = isRunning || !currentName;
       document.getElementById("redoButton").disabled = isRunning;
       document.getElementById("unusedSection").hidden = isRunning || !currentName;
