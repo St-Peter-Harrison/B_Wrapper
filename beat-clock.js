@@ -1,16 +1,18 @@
 class BeatClock {
-  constructor(speed = 1) {
+  constructor(speed = 1, turnSeconds = 2.85, trackOffset = 0.29) {
     this.speed = [1, 0.75, 0.5].includes(speed) ? speed : 1;
     this.context = new (window.AudioContext || window.webkitAudioContext)();
-    this.period = 2.9;
+    this.turnSeconds = Number.isFinite(turnSeconds) && turnSeconds >= 2.1 && turnSeconds <= 10 ? turnSeconds : 2.85;
+    this.trackOffset = Number.isFinite(trackOffset) && trackOffset >= 0 && trackOffset <= 10 ? trackOffset : 0.29;
+    this.period = this.turnSeconds / this.speed;
     this.source = null;
   }
   async prepare() {
     await this.context.resume();
-    const bytes = Uint8Array.from(atob(window.BEASTIE_BEAT_WAV), c => c.charCodeAt(0));
+    const bytes = Uint8Array.from(atob(window.BEASTIE_SONG_PARTS.join("")), c => c.charCodeAt(0));
     this.buffer = await this.context.decodeAudioData(bytes.buffer);
-    if (Math.abs(this.buffer.duration - 2.9) > 0.001) throw new Error('Wrong beat duration.');
-    this.period = this.buffer.duration / this.speed;
+    this.trackEnd = this.trackOffset + Math.floor((this.buffer.duration - this.trackOffset) / this.turnSeconds) * this.turnSeconds;
+    if (this.trackEnd <= this.trackOffset) throw new Error("Audio track is too short.");
   }
   start() {
     this.gain = this.context.createGain();
@@ -19,11 +21,12 @@ class BeatClock {
     this.source = this.context.createBufferSource();
     this.source.buffer = this.buffer;
     this.source.loop = true;
-    this.source.loopEnd = this.buffer.duration;
+    this.source.loopStart = this.trackOffset;
+    this.source.loopEnd = this.trackEnd;
     this.source.playbackRate.value = this.speed;
     this.source.connect(this.gain);
     this.origin = this.context.currentTime + 0.12;
-    this.source.start(this.origin);
+    this.source.start(this.origin, this.trackOffset);
   }
   nextBoundary() {
     return this.origin + Math.max(0, Math.ceil((this.context.currentTime + 0.12 - this.origin) / this.period)) * this.period;
