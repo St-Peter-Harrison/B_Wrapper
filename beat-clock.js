@@ -1,5 +1,6 @@
 class BeatClock {
-  constructor() {
+  constructor(speed = 1) {
+    this.speed = [1, 0.75, 0.5].includes(speed) ? speed : 1;
     this.context = new (window.AudioContext || window.webkitAudioContext)();
     this.period = 2.9;
     this.source = null;
@@ -9,7 +10,7 @@ class BeatClock {
     const bytes = Uint8Array.from(atob(window.BEASTIE_BEAT_WAV), c => c.charCodeAt(0));
     this.buffer = await this.context.decodeAudioData(bytes.buffer);
     if (Math.abs(this.buffer.duration - 2.9) > 0.001) throw new Error('Wrong beat duration.');
-    this.period = this.buffer.duration;
+    this.period = this.buffer.duration / this.speed;
   }
   start() {
     this.gain = this.context.createGain();
@@ -18,7 +19,8 @@ class BeatClock {
     this.source = this.context.createBufferSource();
     this.source.buffer = this.buffer;
     this.source.loop = true;
-    this.source.loopEnd = this.period;
+    this.source.loopEnd = this.buffer.duration;
+    this.source.playbackRate.value = this.speed;
     this.source.connect(this.gain);
     this.origin = this.context.currentTime + 0.12;
     this.source.start(this.origin);
@@ -35,10 +37,10 @@ class BeatClock {
     }
     return false;
   }
-  cue(time) {
+  cue(time, frequency = 660) {
     const oscillator = this.context.createOscillator();
     const gain = this.context.createGain();
-    oscillator.frequency.value = 880;
+    oscillator.frequency.value = frequency;
     gain.gain.setValueAtTime(0, time);
     gain.gain.linearRampToValueAtTime(0.10, time + 0.005);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.075);
