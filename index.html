@@ -150,6 +150,7 @@
 
   <button id="startButton">Start Round</button>
   <button id="stopButton" disabled>Stop</button>
+  <p>Beep = computer’s turn. Start your line on the next loop.</p>
 
   <section class="card" aria-live="polite">
     <div class="label">Current name</div>
@@ -168,9 +169,10 @@
   </section>
 
   <script src="beastie-rap-data.js"></script>
+  <script src="beat-v6.js"></script>
+  <script src="beat-clock.js"></script>
   <script>
-    const WAIT_SECONDS = 4;
-    const RECORD_SECONDS = 4;
+    let beatClock = null;
     const TRANSCRIPTION_MODEL = "voxtral-mini-latest";
     const RHYME_AGENT_ID = "ag_01a0a1b2d39e7676a738829559ea16a0";
 
@@ -193,8 +195,12 @@
 
     startButton.addEventListener("click", startRound);
     stopButton.addEventListener("click", stopApp);
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && running) stopApp();
+    });
 
     async function startRound() {
+      if (running) return;
       const apiKey = apiKeyInput.value.trim();
 
       if (!apiKey) {
@@ -204,20 +210,6 @@
 
       if (!window.BEASTIE_RAP_DATA) {
         alert("The rhyme data file did not load.");
-        return;
-      }
-
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (error) {
-        alert("Could not access microphone: " + error.message);
-        return;
-      }
-
-      if (!MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
-        alert("This browser cannot record WebM/Opus audio.");
         return;
       }
 
@@ -237,15 +229,27 @@
       addLog("computer", "The name is " + currentName.name + ".");
 
       try {
-        await speakText("The name is " + currentName.name + ".");
+        statusElement.textContent = "STARTING";
+        beatClock = new BeatClock();
+        const clock = beatClock;
+        // Unlock both audio APIs directly from the Start tap.
+        const prepared = clock.prepare();
+        const announced = speakText("The name is " + currentName.name + ".");
+        const microphone = navigator.mediaDevices.getUserMedia({ audio: {
+          echoCancellation: true, noiseSuppression: true
+        }}).then(value => {
+          if (!isCurrentRun(thisRun)) value.getTracks().forEach(track => track.stop());
+          else stream = value;
+        });
+        await Promise.all([prepared, announced, microphone]);
         if (!isCurrentRun(thisRun)) return;
-
-        await speakText(
-          "I met a guy and his name was " + currentName.name + "."
-        );
-        if (!isCurrentRun(thisRun)) return;
-
-        await runGame(thisRun);
+        if (!MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+          throw new Error("This browser cannot record WebM/Opus audio.");
+        }
+        clock.start();
+        const firstPlayerStart = await computerBar("Name: " + currentName.name + ".", thisRun);
+        if (firstPlayerStart === null) return;
+        await runGame(thisRun, firstPlayerStart);
       } catch (error) {
         if (!isCurrentRun(thisRun)) return;
         addLog("error", "ERROR: " + error.message);
@@ -253,12 +257,29 @@
       }
     }
 
-    async function runGame(thisRun) {
-      while (isCurrentRun(thisRun)) {
-        const ready = await countdown("GET READY", WAIT_SECONDS, thisRun);
-        if (!ready) return;
+    async function computerBar(text, thisRun) {
+      const clock = beatClock;
+      const active = () => isCurrentRun(thisRun);
+      const start = clock.nextBoundary();
+      statusElement.textContent = "COMPUTER UP NEXT";
+      clock.cue(start);
+      if (!await clock.waitUntil(start, active)) return null;
+      if (clock.context.currentTime - start > 0.12) throw new Error("Timing interrupted. Start a new round.");
+      statusElement.textContent = "COMPUTER — YOU’RE NEXT";
+      // A short announcement leaves room before the microphone opens.
+      speakText(text);
+      if (!await clock.waitUntil(start + clock.period - 0.10, active, true)) return null;
+      cancelSpeech();
+      if (!await clock.waitUntil(start + clock.period, active, true)) return null;
+      return start + clock.period;
+    }
 
-        const audioBlob = await recordAudio(RECORD_SECONDS, thisRun);
+    async function runGame(thisRun, playerStart) {
+      while (isCurrentRun(thisRun)) {
+        if (beatClock.context.currentTime - playerStart > 0.12) {
+          throw new Error("Timing interrupted. Start a new round.");
+        }
+        const audioBlob = await recordAudio(playerStart + beatClock.period, thisRun);
         if (!audioBlob || !isCurrentRun(thisRun)) return;
 
         statusElement.textContent = "TRANSCRIBING";
@@ -290,6 +311,7 @@
         if (!playerChoice) {
           addLog("failure", "No clear approved rhyme completed that sentence.");
           await speakText("No clear rhyme.");
+          if (!isCurrentRun(thisRun)) return;
           finishRound("ROUND OVER");
           return;
         }
@@ -316,11 +338,8 @@
         });
 
         addLog("computer", "Computer: " + computerWord);
-        statusElement.textContent = "COMPUTER TURN";
-
-        await speakText(
-          "The computer is using the word " + computerWord + "."
-        );
+        playerStart = await computerBar("Computer: " + computerWord + ".", thisRun);
+        if (playerStart === null) return;
       }
     }
 
@@ -475,91 +494,40 @@
       return String(result.text ?? "");
     }
 
-    function recordAudio(seconds, thisRun) {
-      return new Promise(resolve => {
+    function recordAudio(endTime, thisRun) {
+      const clock = beatClock;
+      return new Promise((resolve, reject) => {
         const chunks = [];
-        let displayTimer = null;
-        let stopTimer = null;
-
-        const recorder = new MediaRecorder(stream, {
-          mimeType: "audio/webm;codecs=opus"
-        });
-
+        const recorder = new MediaRecorder(stream, { mimeType: "audio/webm;codecs=opus" });
         currentRecorder = recorder;
-
+        let displayTimer;
+        const cleanup = () => {
+          clearInterval(displayTimer);
+          if (isCurrentRun(thisRun)) countdownElement.textContent = "";
+          if (currentRecorder === recorder) currentRecorder = null;
+        };
         recorder.ondataavailable = event => {
-          if (event.data.size > 0) {
-            chunks.push(event.data);
-          }
+          if (event.data.size) chunks.push(event.data);
         };
-
         recorder.onstop = () => {
-          clearInterval(displayTimer);
-          clearTimeout(stopTimer);
-          countdownElement.textContent = "";
-
-          if (currentRecorder === recorder) {
-            currentRecorder = null;
-          }
-
-          if (chunks.length === 0) {
-            resolve(null);
-            return;
-          }
-
-          resolve(new Blob(chunks, { type: "audio/webm" }));
+          cleanup();
+          resolve(chunks.length ? new Blob(chunks, { type: "audio/webm" }) : null);
         };
-
         recorder.onerror = event => {
-          clearInterval(displayTimer);
-          clearTimeout(stopTimer);
-          currentRecorder = null;
-          resolve(null);
-          addLog(
-            "error",
-            "Recording error: " + (event.error?.message || "Unknown error")
-          );
+          cleanup();
+          reject(new Error("Recording error: " + (event.error?.message || "Unknown error")));
         };
-
         recorder.start();
-        statusElement.textContent = "RECORDING";
-
-        let remaining = seconds;
-        countdownElement.textContent = remaining;
-
-        displayTimer = setInterval(() => {
-          remaining -= 1;
-
-          if (remaining > 0) {
-            countdownElement.textContent = remaining;
-          }
-        }, 1000);
-
-        stopTimer = setTimeout(() => {
-          if (
-            isCurrentRun(thisRun) &&
-            recorder.state === "recording"
-          ) {
-            recorder.stop();
-          }
-        }, seconds * 1000);
+        statusElement.textContent = "YOUR TURN — RECORDING";
+        const display = () => {
+          if (isCurrentRun(thisRun)) countdownElement.textContent = Math.max(0, endTime - clock.context.currentTime).toFixed(1);
+        };
+        display();
+        displayTimer = setInterval(display, 50);
+        clock.waitUntil(endTime, () => isCurrentRun(thisRun)).then(() => {
+          if (recorder.state === "recording") recorder.stop();
+        });
       });
-    }
-
-    async function countdown(label, seconds, thisRun) {
-      statusElement.textContent = label;
-
-      for (let remaining = seconds; remaining > 0; remaining -= 1) {
-        if (!isCurrentRun(thisRun)) {
-          return false;
-        }
-
-        countdownElement.textContent = remaining;
-        await sleep(1000);
-      }
-
-      countdownElement.textContent = "";
-      return isCurrentRun(thisRun);
     }
 
     function markRhymeUsed(choice) {
@@ -587,6 +555,9 @@
     function finishRound(message) {
       running = false;
       runNumber += 1;
+      cancelSpeech();
+      beatClock?.stop();
+      beatClock = null;
 
       if (currentRecorder?.state === "recording") {
         currentRecorder.stop();
@@ -605,7 +576,9 @@
     function stopApp() {
       running = false;
       runNumber += 1;
-      window.speechSynthesis?.cancel();
+      cancelSpeech();
+      beatClock?.stop();
+      beatClock = null;
 
       if (currentRecorder?.state === "recording") {
         currentRecorder.stop();
@@ -630,7 +603,15 @@
       return running && thisRun === runNumber;
     }
 
+    let finishSpeech = null;
+
+    function cancelSpeech() {
+      window.speechSynthesis?.cancel();
+      if (finishSpeech) finishSpeech();
+    }
+
     function speakText(text) {
+      cancelSpeech();
       return new Promise(resolve => {
         if (!("speechSynthesis" in window)) {
           resolve();
@@ -643,19 +624,22 @@
         const finish = () => {
           if (finished) return;
           finished = true;
+          if (finishSpeech === finish) finishSpeech = null;
           clearTimeout(fallbackTimer);
           resolve();
         };
 
         utterance.rate = 1;
+        utterance.lang = "en-US";
         utterance.onend = finish;
         utterance.onerror = finish;
 
         const fallbackTimer = setTimeout(
-          finish,
+          () => { if (!finished) { window.speechSynthesis.cancel(); finish(); } },
           Math.max(3000, text.length * 120)
         );
 
+        finishSpeech = finish;
         window.speechSynthesis.speak(utterance);
       });
     }
