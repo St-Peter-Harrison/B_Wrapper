@@ -743,7 +743,6 @@
       "Crocodile",
       "Defile",
       "Denial",
-      "Dile",
       "Fertile",
       "File",
       "Francophile",
@@ -1183,7 +1182,7 @@
       "Pill",
       "Quill",
       "Refill",
-      "Sil",
+      "Sill",
       "Shill",
       "Skill",
       "Spill",
@@ -1191,7 +1190,7 @@
       "Swill",
       "Til",
       "Treadmill",
-      "Tril",
+      "Trill",
       "Thrill",
       "Until"
     ]
