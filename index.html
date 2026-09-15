@@ -156,6 +156,14 @@
       <option value="0.5">50% — Slowest</option>
     </select>
   </div>
+  <details style="margin: 12px 0">
+    <summary>Beat timing</summary>
+    <label for="turnSeconds">Seconds per turn at normal speed</label>
+    <input id="turnSeconds" type="number" min="2.1" max="10" step="0.001" value="2.85">
+    <label for="trackOffset">Track start offset (seconds)</label>
+    <input id="trackOffset" type="number" min="0" max="10" step="0.01" value="0.29">
+    <small>Adjust between rounds if cues drift or start between beats.</small>
+  </details>
   <button id="startButton">Start Round</button>
   <button id="stopButton" disabled>Stop</button>
   <p>Three beeps count you in. Start speaking on the higher third beep.</p>
@@ -177,8 +185,15 @@
   </section>
 
   <script src="beastie-rap-data.js"></script>
-  <script src="beat-v6.js"></script>
-  <script src="beat-clock.js"></script>
+  <script src="song-part-0.js"></script>
+  <script src="song-part-1.js"></script>
+  <script src="song-part-2.js"></script>
+  <script src="song-part-3.js"></script>
+  <script src="song-part-4.js"></script>
+  <script src="song-part-5.js"></script>
+  <script src="song-part-6.js"></script>
+  <script src="song-part-7.js"></script>
+  <script src="beat-clock.js?v=song1"></script>
   <script>
     let beatClock = null;
     const TRANSCRIPTION_MODEL = "voxtral-mini-latest";
@@ -238,7 +253,11 @@
 
       try {
         statusElement.textContent = "STARTING";
-        beatClock = new BeatClock(Number(document.getElementById("speed").value));
+        beatClock = new BeatClock(
+          Number(document.getElementById("speed").value),
+          Number(document.getElementById("turnSeconds").value),
+          Number(document.getElementById("trackOffset").value)
+        );
         const clock = beatClock;
         // Unlock both audio APIs directly from the Start tap.
         const prepared = clock.prepare();
@@ -606,6 +625,8 @@
     }
 
     function setControls(isRunning) {
+      document.getElementById("turnSeconds").disabled = isRunning;
+      document.getElementById("trackOffset").disabled = isRunning;
       document.getElementById("speed").disabled = isRunning;
       startButton.disabled = isRunning;
       stopButton.disabled = !isRunning;
