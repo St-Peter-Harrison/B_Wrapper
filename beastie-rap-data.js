@@ -242,7 +242,8 @@
       "Stan",
       "Tan",
       "Trepan",
-      "Van"
+      "Van",
+      "Chan"
     ]
   },
   {
@@ -479,7 +480,8 @@
       "Tack",
       "Track",
       "Whack",
-      "Yack"
+      "Yack",
+      "Mac"
     ]
   },
   {
@@ -623,7 +625,8 @@
       "Synonym",
       "Whim",
       "Vim",
-      "Zim"
+      "Zim",
+      "Trim"
     ]
   },
   {
@@ -666,7 +669,9 @@
       "Throw",
       "Tow",
       "Woe",
-      "Yo"
+      "Yo",
+      "Ego",
+      "Oboe"
     ]
   },
   {
@@ -763,7 +768,8 @@
       "Tile",
       "Trial",
       "Versatile",
-      "While"
+      "While",
+      "Dial"
     ]
   },
   {
@@ -817,7 +823,8 @@
       "View",
       "Who",
       "Zoo",
-      "Drew"
+      "Drew",
+      "Grew"
     ]
   },
   {
@@ -960,7 +967,8 @@
       "Ploy",
       "Nimoy",
       "Soy",
-      "Toy"
+      "Toy",
+      "Troy"
     ]
   },
   {
@@ -995,7 +1003,8 @@
       "Gram",
       "Ham",
       "Jam",
-      "Lamb",      "Ma'am",
+      "Lamb",
+      "Ma'am",
       "Pam",
       "Pram",
       "Program",
@@ -1052,7 +1061,8 @@
       "Trot",
       "Thought",
       "Wrought",
-      "Yacht"
+      "Yacht",
+      "Caught"
     ]
   },
   {
@@ -1090,7 +1100,8 @@
       "Sent",
       "Tent",
       "Went",
-      "Vent"
+      "Vent",
+      "Ent"
     ]
   },
   {
@@ -1148,8 +1159,8 @@
       "Rain",
       "Refrain",
       "Sane",
-    "Insane",
-    "Zayn",
+      "Insane",
+      "Zayn",
       "Slain",
       "Sustain",
       "Shane",
@@ -1192,7 +1203,8 @@
       "Treadmill",
       "Trill",
       "Thrill",
-      "Until"
+      "Until",
+      "Ill"
     ]
   }
 ];
@@ -1201,112 +1213,768 @@
   // The LLM may receive every spelling, but the app tracks the shared id.
   // Therefore, using any spelling blocks every other spelling in that set.
   const homophoneGroups = [
-    { id: "add-ad", spellings: ["Add", "Ad"] },
-    { id: "jenn-jen", spellings: ["Jenn", "Jen"] },
-    { id: "nob-knob", spellings: ["Nob", "Knob"] },
-    { id: "claire-clare-clair", spellings: ["Claire", "Clare", "Clair"] },
-    { id: "bear-bare", spellings: ["Bear", "Bare"] },
-    { id: "fair-fare", spellings: ["Fair", "Fare"] },
-    { id: "flair-flare", spellings: ["Flair", "Flare"] },
-    { id: "hair-hare", spellings: ["Hair", "Hare"] },
-    { id: "pear-pair-pare", spellings: ["Pear", "Pair", "Pare"] },
-    { id: "stare-stair", spellings: ["Stare", "Stair"] },
-    { id: "tear-tare", spellings: ["Tear", "Tare"] },
-    { id: "where-wear-ware", spellings: ["Where", "Wear", "Ware"] },
-    { id: "carl-karl", spellings: ["Carl", "Karl"] },
-    { id: "chris-kris", spellings: ["Chris", "Kris"] },
-    { id: "ugh-ug", spellings: ["Ugh", "Ug"] },
-    { id: "greg-gregg", spellings: ["Greg", "Gregg"] },
-    { id: "bred-bread", spellings: ["Bred", "Bread"] },
-    { id: "led-lead", spellings: ["Led", "Lead"] },
-    { id: "red-read", spellings: ["Red", "Read"] },
-    { id: "base-bass", spellings: ["Base", "Bass"] },
-    { id: "cant-cant", spellings: ["Can't", "Cant"] },
-    { id: "flack-flak", spellings: ["Flack", "Flak"] },
-    { id: "whack-wack", spellings: ["Whack", "Wack"] },
-    { id: "yack-yak", spellings: ["Yack", "Yak"] },
-    { id: "break-brake", spellings: ["Break", "Brake"] },
-    { id: "steak-stake", spellings: ["Steak", "Stake"] },
-    { id: "jean-gene", spellings: ["Jean", "Gene"] },
-    { id: "lean-lien", spellings: ["Lean", "Lien"] },
-    { id: "mean-mien", spellings: ["Mean", "Mien"] },
-    { id: "seen-scene", spellings: ["Seen", "Scene"] },
-    { id: "jeff-geoff", spellings: ["Jeff", "Geoff"] },
-    { id: "f-eff", spellings: ["F", "Eff"] },
-    { id: "steph-steff", spellings: ["Steph", "Steff"] },
-    { id: "beau-bo-bow", spellings: ["Beau", "Bo", "Bow"] },
-    { id: "doe-dough", spellings: ["Doe", "Dough"] },
-    { id: "faux-foe", spellings: ["Faux", "Foe"] },
-    { id: "flow-floe", spellings: ["Flow", "Floe"] },
-    { id: "hoe-ho", spellings: ["Hoe", "Ho"] },
-    { id: "joe-jo", spellings: ["Joe", "Jo"] },
-    { id: "know-no", spellings: ["Know", "No"] },
-    { id: "owe-oh", spellings: ["Owe", "Oh"] },
-    { id: "row-roe", spellings: ["Row", "Roe"] },
-    { id: "sew-so-sow", spellings: ["Sew", "So", "Sow"] },
-    { id: "though-tho", spellings: ["Though", "Tho"] },
-    { id: "throw-throe", spellings: ["Throw", "Throe"] },
-    { id: "tow-toe", spellings: ["Tow", "Toe"] },
-    { id: "woe-whoa-woah", spellings: ["Woe", "Whoa", "Woah"] },
-    { id: "fawn-faun", spellings: ["Fawn", "Faun"] },
-    { id: "john-jon", spellings: ["John", "Jon"] },
-    { id: "shawn-sean", spellings: ["Shawn", "Sean"] },
-    { id: "aisle-ill-isle", spellings: ["Aisle", "I'll", "Isle"] },
-    { id: "style-stile", spellings: ["Style", "Stile"] },
-    { id: "while-wile", spellings: ["While", "Wile"] },
-    { id: "wiz-whiz", spellings: ["Wiz", "Whiz"] },
-    { id: "lou-loo-lieu", spellings: ["Lou", "Loo", "Lieu"] },
-    { id: "coup-coo", spellings: ["Coup", "Coo"] },
-    { id: "due-dew-do", spellings: ["Due", "Dew", "Do"] },
-    { id: "new-knew-gnu", spellings: ["New", "Knew", "Gnu"] },
-    { id: "ooo-ooh", spellings: ["Ooo", "Ooh"] },
-    { id: "queue-cue-q", spellings: ["Queue", "Cue", "Q"] },
-    { id: "rue-roux", spellings: ["Rue", "Roux"] },
-    { id: "shoe-shoo", spellings: ["Shoe", "Shoo"] },
-    { id: "sue-sioux", spellings: ["Sue", "Sioux"] },
-    { id: "too-to-two", spellings: ["Too", "To", "Two"] },
-    { id: "through-thru", spellings: ["Through", "Thru"] },
-    { id: "who-hugh", spellings: ["Who", "Hugh"] },
-    { id: "mark-marc", spellings: ["Mark", "Marc"] },
-    { id: "ark-arc", spellings: ["Ark", "Arc"] },
-    { id: "clark-clarke", spellings: ["Clark", "Clarke"] },
-    { id: "narc-nark", spellings: ["Narc", "Nark"] },
-    { id: "dike-dyke", spellings: ["Dike", "Dyke"] },
-    { id: "sike-psych", spellings: ["Sike", "Psych"] },
-    { id: "tyke-tike", spellings: ["Tyke", "Tike"] },
-    { id: "cat-kat", spellings: ["Cat", "Kat"] },
-    { id: "gnat-nat", spellings: ["Gnat", "Nat"] },
-    { id: "mat-matt", spellings: ["Mat", "Matt"] },
-    { id: "paul-pawl", spellings: ["Paul", "Pawl"] },
-    { id: "all-awl", spellings: ["All", "Awl"] },
-    { id: "ball-bawl", spellings: ["Ball", "Bawl"] },
-    { id: "gall-gaul", spellings: ["Gall", "Gaul"] },
-    { id: "hall-haul", spellings: ["Hall", "Haul"] },
-    { id: "mall-maul", spellings: ["Mall", "Maul"] },
-    { id: "saul-sol", spellings: ["Saul", "Sol"] },
-    { id: "yall-yawl", spellings: ["Y'all", "Yawl", "Yall"] },
-    { id: "coy-koi", spellings: ["Coy", "Koi"] },
-    { id: "oy-oi", spellings: ["Oy", "Oi"] },
-    { id: "dam-damn", spellings: ["Dam", "Damn"] },
-    { id: "lamb-lam", spellings: ["Lamb", "Lam"] },
-    { id: "maam-mam", spellings: ["Ma'am", "Mam"] },
-    { id: "knot-not", spellings: ["Knot", "Not"] },
-    { id: "sent-cent-scent", spellings: ["Sent", "Cent", "Scent"] },
-    { id: "wayne-wain", spellings: ["Wayne", "Wain"] },
-    { id: "bane-bain", spellings: ["Bane", "Bain"] },
-    { id: "cane-cain-kane", spellings: ["Cane", "Cain", "Kane"] },
-    { id: "fane-fain-feign", spellings: ["Fane", "Fain", "Feign"] },
-    { id: "jane-jayne", spellings: ["Jane", "Jayne"] },
-    { id: "lane-layne", spellings: ["Lane", "Layne"] },
-    { id: "mane-main", spellings: ["Mane", "Main"] },
-    { id: "pane-pain", spellings: ["Pane", "Pain"] },
-    { id: "rain-reign-rein", spellings: ["Rain", "Reign", "Rein"] },
-    { id: "shane-shayne", spellings: ["Shane", "Shayne"] },
-    { id: "vane-vain-vein", spellings: ["Vane", "Vain", "Vein"] },
-    { id: "fill-phil", spellings: ["Fill", "Phil"] },
-    { id: "gill-gil", spellings: ["Gill", "Gil"] },
-    { id: "til-till", spellings: ["Til", "Till", "'Til"] }
-  ];
+  {
+    "id": "add-ad",
+    "spellings": [
+      "Add",
+      "Ad"
+    ]
+  },
+  {
+    "id": "jenn-jen",
+    "spellings": [
+      "Jenn",
+      "Jen"
+    ]
+  },
+  {
+    "id": "nob-knob",
+    "spellings": [
+      "Nob",
+      "Knob"
+    ]
+  },
+  {
+    "id": "claire-clare-clair",
+    "spellings": [
+      "Claire",
+      "Clare",
+      "Clair"
+    ]
+  },
+  {
+    "id": "bear-bare",
+    "spellings": [
+      "Bear",
+      "Bare"
+    ]
+  },
+  {
+    "id": "fair-fare",
+    "spellings": [
+      "Fair",
+      "Fare"
+    ]
+  },
+  {
+    "id": "flair-flare",
+    "spellings": [
+      "Flair",
+      "Flare"
+    ]
+  },
+  {
+    "id": "hair-hare",
+    "spellings": [
+      "Hair",
+      "Hare"
+    ]
+  },
+  {
+    "id": "pear-pair-pare",
+    "spellings": [
+      "Pear",
+      "Pair",
+      "Pare"
+    ]
+  },
+  {
+    "id": "stare-stair",
+    "spellings": [
+      "Stare",
+      "Stair"
+    ]
+  },
+  {
+    "id": "tear-tare",
+    "spellings": [
+      "Tear",
+      "Tare"
+    ]
+  },
+  {
+    "id": "where-wear-ware",
+    "spellings": [
+      "Where",
+      "Wear",
+      "Ware"
+    ]
+  },
+  {
+    "id": "carl-karl",
+    "spellings": [
+      "Carl",
+      "Karl"
+    ]
+  },
+  {
+    "id": "chris-kris",
+    "spellings": [
+      "Chris",
+      "Kris"
+    ]
+  },
+  {
+    "id": "ugh-ug",
+    "spellings": [
+      "Ugh",
+      "Ug"
+    ]
+  },
+  {
+    "id": "greg-gregg",
+    "spellings": [
+      "Greg",
+      "Gregg"
+    ]
+  },
+  {
+    "id": "bred-bread",
+    "spellings": [
+      "Bred",
+      "Bread"
+    ]
+  },
+  {
+    "id": "led-lead",
+    "spellings": [
+      "Led",
+      "Lead"
+    ]
+  },
+  {
+    "id": "red-read",
+    "spellings": [
+      "Red",
+      "Read"
+    ]
+  },
+  {
+    "id": "base-bass",
+    "spellings": [
+      "Base",
+      "Bass"
+    ]
+  },
+  {
+    "id": "cant-cant",
+    "spellings": [
+      "Can't",
+      "Cant"
+    ]
+  },
+  {
+    "id": "flack-flak",
+    "spellings": [
+      "Flack",
+      "Flak"
+    ]
+  },
+  {
+    "id": "whack-wack",
+    "spellings": [
+      "Whack",
+      "Wack"
+    ]
+  },
+  {
+    "id": "yack-yak",
+    "spellings": [
+      "Yack",
+      "Yak"
+    ]
+  },
+  {
+    "id": "break-brake",
+    "spellings": [
+      "Break",
+      "Brake"
+    ]
+  },
+  {
+    "id": "steak-stake",
+    "spellings": [
+      "Steak",
+      "Stake"
+    ]
+  },
+  {
+    "id": "jean-gene",
+    "spellings": [
+      "Jean",
+      "Gene"
+    ]
+  },
+  {
+    "id": "lean-lien",
+    "spellings": [
+      "Lean",
+      "Lien"
+    ]
+  },
+  {
+    "id": "mean-mien",
+    "spellings": [
+      "Mean",
+      "Mien"
+    ]
+  },
+  {
+    "id": "seen-scene",
+    "spellings": [
+      "Seen",
+      "Scene"
+    ]
+  },
+  {
+    "id": "jeff-geoff",
+    "spellings": [
+      "Jeff",
+      "Geoff"
+    ]
+  },
+  {
+    "id": "f-eff",
+    "spellings": [
+      "F",
+      "Eff"
+    ]
+  },
+  {
+    "id": "steph-steff",
+    "spellings": [
+      "Steph",
+      "Steff"
+    ]
+  },
+  {
+    "id": "beau-bo-bow",
+    "spellings": [
+      "Beau",
+      "Bo",
+      "Bow"
+    ]
+  },
+  {
+    "id": "doe-dough",
+    "spellings": [
+      "Doe",
+      "Dough"
+    ]
+  },
+  {
+    "id": "faux-foe",
+    "spellings": [
+      "Faux",
+      "Foe"
+    ]
+  },
+  {
+    "id": "flow-floe",
+    "spellings": [
+      "Flow",
+      "Floe"
+    ]
+  },
+  {
+    "id": "hoe-ho",
+    "spellings": [
+      "Hoe",
+      "Ho"
+    ]
+  },
+  {
+    "id": "joe-jo",
+    "spellings": [
+      "Joe",
+      "Jo"
+    ]
+  },
+  {
+    "id": "know-no",
+    "spellings": [
+      "Know",
+      "No"
+    ]
+  },
+  {
+    "id": "owe-oh",
+    "spellings": [
+      "Owe",
+      "Oh"
+    ]
+  },
+  {
+    "id": "row-roe",
+    "spellings": [
+      "Row",
+      "Roe"
+    ]
+  },
+  {
+    "id": "sew-so-sow",
+    "spellings": [
+      "Sew",
+      "So",
+      "Sow"
+    ]
+  },
+  {
+    "id": "though-tho",
+    "spellings": [
+      "Though",
+      "Tho"
+    ]
+  },
+  {
+    "id": "throw-throe",
+    "spellings": [
+      "Throw",
+      "Throe"
+    ]
+  },
+  {
+    "id": "tow-toe",
+    "spellings": [
+      "Tow",
+      "Toe"
+    ]
+  },
+  {
+    "id": "woe-whoa-woah",
+    "spellings": [
+      "Woe",
+      "Whoa",
+      "Woah"
+    ]
+  },
+  {
+    "id": "fawn-faun",
+    "spellings": [
+      "Fawn",
+      "Faun"
+    ]
+  },
+  {
+    "id": "john-jon",
+    "spellings": [
+      "John",
+      "Jon"
+    ]
+  },
+  {
+    "id": "shawn-sean",
+    "spellings": [
+      "Shawn",
+      "Sean"
+    ]
+  },
+  {
+    "id": "aisle-ill-isle",
+    "spellings": [
+      "Aisle",
+      "I'll",
+      "Isle"
+    ]
+  },
+  {
+    "id": "style-stile",
+    "spellings": [
+      "Style",
+      "Stile"
+    ]
+  },
+  {
+    "id": "while-wile",
+    "spellings": [
+      "While",
+      "Wile"
+    ]
+  },
+  {
+    "id": "wiz-whiz",
+    "spellings": [
+      "Wiz",
+      "Whiz"
+    ]
+  },
+  {
+    "id": "lou-loo-lieu",
+    "spellings": [
+      "Lou",
+      "Loo",
+      "Lieu"
+    ]
+  },
+  {
+    "id": "coup-coo",
+    "spellings": [
+      "Coup",
+      "Coo"
+    ]
+  },
+  {
+    "id": "due-dew-do",
+    "spellings": [
+      "Due",
+      "Dew",
+      "Do"
+    ]
+  },
+  {
+    "id": "new-knew-gnu",
+    "spellings": [
+      "New",
+      "Knew",
+      "Gnu"
+    ]
+  },
+  {
+    "id": "ooo-ooh",
+    "spellings": [
+      "Ooo",
+      "Ooh"
+    ]
+  },
+  {
+    "id": "queue-cue-q",
+    "spellings": [
+      "Queue",
+      "Cue",
+      "Q"
+    ]
+  },
+  {
+    "id": "rue-roux",
+    "spellings": [
+      "Rue",
+      "Roux"
+    ]
+  },
+  {
+    "id": "shoe-shoo",
+    "spellings": [
+      "Shoe",
+      "Shoo"
+    ]
+  },
+  {
+    "id": "sue-sioux",
+    "spellings": [
+      "Sue",
+      "Sioux"
+    ]
+  },
+  {
+    "id": "too-to-two",
+    "spellings": [
+      "Too",
+      "To",
+      "Two"
+    ]
+  },
+  {
+    "id": "through-thru",
+    "spellings": [
+      "Through",
+      "Thru"
+    ]
+  },
+  {
+    "id": "who-hugh",
+    "spellings": [
+      "Who",
+      "Hugh"
+    ]
+  },
+  {
+    "id": "mark-marc",
+    "spellings": [
+      "Mark",
+      "Marc"
+    ]
+  },
+  {
+    "id": "ark-arc",
+    "spellings": [
+      "Ark",
+      "Arc"
+    ]
+  },
+  {
+    "id": "clark-clarke",
+    "spellings": [
+      "Clark",
+      "Clarke"
+    ]
+  },
+  {
+    "id": "narc-nark",
+    "spellings": [
+      "Narc",
+      "Nark"
+    ]
+  },
+  {
+    "id": "dike-dyke",
+    "spellings": [
+      "Dike",
+      "Dyke"
+    ]
+  },
+  {
+    "id": "sike-psych",
+    "spellings": [
+      "Sike",
+      "Psych"
+    ]
+  },
+  {
+    "id": "tyke-tike",
+    "spellings": [
+      "Tyke",
+      "Tike"
+    ]
+  },
+  {
+    "id": "cat-kat",
+    "spellings": [
+      "Cat",
+      "Kat"
+    ]
+  },
+  {
+    "id": "gnat-nat",
+    "spellings": [
+      "Gnat",
+      "Nat"
+    ]
+  },
+  {
+    "id": "mat-matt",
+    "spellings": [
+      "Mat",
+      "Matt"
+    ]
+  },
+  {
+    "id": "paul-pawl",
+    "spellings": [
+      "Paul",
+      "Pawl"
+    ]
+  },
+  {
+    "id": "all-awl",
+    "spellings": [
+      "All",
+      "Awl"
+    ]
+  },
+  {
+    "id": "ball-bawl",
+    "spellings": [
+      "Ball",
+      "Bawl"
+    ]
+  },
+  {
+    "id": "gall-gaul",
+    "spellings": [
+      "Gall",
+      "Gaul"
+    ]
+  },
+  {
+    "id": "hall-haul",
+    "spellings": [
+      "Hall",
+      "Haul"
+    ]
+  },
+  {
+    "id": "mall-maul",
+    "spellings": [
+      "Mall",
+      "Maul"
+    ]
+  },
+  {
+    "id": "saul-sol",
+    "spellings": [
+      "Saul",
+      "Sol"
+    ]
+  },
+  {
+    "id": "yall-yawl",
+    "spellings": [
+      "Y'all",
+      "Yawl",
+      "Yall"
+    ]
+  },
+  {
+    "id": "coy-koi",
+    "spellings": [
+      "Coy",
+      "Koi"
+    ]
+  },
+  {
+    "id": "oy-oi",
+    "spellings": [
+      "Oy",
+      "Oi"
+    ]
+  },
+  {
+    "id": "dam-damn",
+    "spellings": [
+      "Dam",
+      "Damn"
+    ]
+  },
+  {
+    "id": "lamb-lam",
+    "spellings": [
+      "Lamb",
+      "Lam"
+    ]
+  },
+  {
+    "id": "maam-mam",
+    "spellings": [
+      "Ma'am",
+      "Mam"
+    ]
+  },
+  {
+    "id": "knot-not",
+    "spellings": [
+      "Knot",
+      "Not"
+    ]
+  },
+  {
+    "id": "sent-cent-scent",
+    "spellings": [
+      "Sent",
+      "Cent",
+      "Scent"
+    ]
+  },
+  {
+    "id": "wayne-wain",
+    "spellings": [
+      "Wayne",
+      "Wain"
+    ]
+  },
+  {
+    "id": "bane-bain",
+    "spellings": [
+      "Bane",
+      "Bain"
+    ]
+  },
+  {
+    "id": "cane-cain-kane",
+    "spellings": [
+      "Cane",
+      "Cain",
+      "Kane"
+    ]
+  },
+  {
+    "id": "fane-fain-feign",
+    "spellings": [
+      "Fane",
+      "Fain",
+      "Feign"
+    ]
+  },
+  {
+    "id": "jane-jayne",
+    "spellings": [
+      "Jane",
+      "Jayne"
+    ]
+  },
+  {
+    "id": "lane-layne",
+    "spellings": [
+      "Lane",
+      "Layne"
+    ]
+  },
+  {
+    "id": "mane-main",
+    "spellings": [
+      "Mane",
+      "Main"
+    ]
+  },
+  {
+    "id": "pane-pain",
+    "spellings": [
+      "Pane",
+      "Pain"
+    ]
+  },
+  {
+    "id": "rain-reign-rein",
+    "spellings": [
+      "Rain",
+      "Reign",
+      "Rein"
+    ]
+  },
+  {
+    "id": "shane-shayne",
+    "spellings": [
+      "Shane",
+      "Shayne"
+    ]
+  },
+  {
+    "id": "vane-vain-vein",
+    "spellings": [
+      "Vane",
+      "Vain",
+      "Vein"
+    ]
+  },
+  {
+    "id": "fill-phil",
+    "spellings": [
+      "Fill",
+      "Phil"
+    ]
+  },
+  {
+    "id": "gill-gil",
+    "spellings": [
+      "Gill",
+      "Gil"
+    ]
+  },
+  {
+    "id": "til-till",
+    "spellings": [
+      "Til",
+      "Till",
+      "'Til"
+    ]
+  },
+  {
+    "id": "cot-caught",
+    "spellings": [
+      "Cot",
+      "Caught"
+    ]
+  }
+];
 
   const names = [
   {
@@ -1850,3 +2518,4 @@
     pickRandomName
   });
 })();
+
