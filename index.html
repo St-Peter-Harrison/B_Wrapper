@@ -184,9 +184,10 @@
   </div>
   <div style="margin: 12px 0">
     <label for="noComputerMode">
-      <input id="noComputerMode" type="checkbox" autocomplete="off" style="width: auto; margin: 0 6px 0 0">
+      <input id="noComputerMode" aria-describedby="computerModeHelp" type="checkbox" autocomplete="off" style="width: auto; margin: 0 6px 0 0">
       No Computer Mode
     </label>
+    <p id="computerModeHelp" style="font-size: 14px; color: var(--muted); margin: 8px 0 0">In computer mode, the computer randomly removes a rhyme each round, simulating a real game. Check this box to practice without the computer.</p>
   </div>
   <button id="startButton" type="submit" form="apiKeyForm">Start Game</button>
   <button id="stopButton" disabled>Stop</button>
@@ -531,7 +532,7 @@
       ].join("\n");
 
       await sleep(500);
-      const response = await fetchWithOneRetry(
+      const response = await fetchWithRetries(
         "https://api.mistral.ai/v1/conversations",
         {
           method: "POST",
@@ -604,21 +605,23 @@
       };
     }
 
-    async function fetchWithOneRetry(url, options, thisRun, label) {
-      for (let attempt = 0; attempt < 2; attempt += 1) {
+    async function fetchWithRetries(url, options, thisRun, label, maxRetries = 1) {
+      for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
         if (!isCurrentRun(thisRun)) return null;
         statusElement.textContent = label;
         try {
           const response = await fetch(url, options);
           if (!isCurrentRun(thisRun)) return null;
-          if (response.ok || attempt === 1) return response;
-          // Discard the first error body; the final error is handled by the caller.
+          if (response.ok || attempt === maxRetries) return response;
+          // Discard intermediate error bodies; the final error is handled by the caller.
           await response.text();
         } catch (error) {
           if (!isCurrentRun(thisRun)) return null;
-          if (attempt === 1) throw error;
+          if (attempt === maxRetries) throw error;
         }
-        statusElement.textContent = label + " — RETRYING IN 1 SECOND";
+        statusElement.textContent = label === "TRANSCRIBING"
+          ? "TRANSCRIPTION BUSY — PLEASE WAIT. RETRY " + (attempt + 1) + "/" + maxRetries + " IN 1 SECOND"
+          : label + " — RETRYING IN 1 SECOND";
         await sleep(1000);
       }
     }
@@ -631,7 +634,7 @@
       formData.append("language", "en");
       formData.append("file", audioBlob, "recording.webm");
 
-      const response = await fetchWithOneRetry(
+      const response = await fetchWithRetries(
         "https://api.mistral.ai/v1/audio/transcriptions",
         {
           method: "POST",
@@ -640,7 +643,7 @@
           },
           body: formData
         },
-        thisRun, "TRANSCRIBING"
+        thisRun, "TRANSCRIBING", 6
       );
       if (!response) return "";
 
