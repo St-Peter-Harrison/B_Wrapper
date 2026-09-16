@@ -1,5 +1,16 @@
 // Short original clues, keyed by spelling; homophones retain separate meanings.
 window.BEASTIE_RHYME_DEFINITIONS = Object.freeze(Object.fromEntries(`
+troy|boy's name; ancient city besieged in the Iliad
+chan|surname of actor and martial artist Jackie Chan
+dial|enter a phone number; numbered face or control knob
+ent|talking, tree-like being in The Lord of the Rings
+oboe|woodwind instrument played with a double reed
+ill|sick or unwell; bad or harmful
+trim|cut a little off; decorative edging; neat and slim
+caught|past tense of catch; captured, grabbed, or discovered
+ego|sense of self; self-importance or pride
+mac|given name; short for macaroni, as in mac and cheese; Apple computer
+grew|past tense of grow; became larger or developed
 ben|man's name, often short for Benjamin
 jenn|woman's name, short for Jennifer
 jen|woman's name, short for Jennifer
@@ -1001,3 +1012,4 @@ until|up to a particular time
   const separator = line.indexOf('|');
   return [line.slice(0, separator), line.slice(separator + 1)];
 })));
+
