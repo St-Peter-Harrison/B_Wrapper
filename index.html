@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Beastie Rap Practice</title>
+  <script id="goatcounter-script"
+          data-goatcounter="https://eterpage.goatcounter.com/count"
+          data-goatcounter-settings='{"no_onload":true}'
+          async src="https://gc.zgo.at/count.js"></script>
 
   <style>
     :root {
@@ -232,6 +236,56 @@
   <script src="song-part-7.js"></script>
   <script src="beat-clock.js?v=song1"></script>
   <script>
+    // Count actual play once per local calendar day; never include game or credential data.
+    const PLAY_COUNT_KEY = "beastie-rap-last-counted-day-v1";
+    let countedPlayDay = "";
+    let pendingPlayDay = "";
+
+    function flushDailyPlayCount() {
+      if (!pendingPlayDay || typeof window.goatcounter?.count !== "function") return;
+      const day = pendingPlayDay;
+      try {
+        if (countedPlayDay === day || localStorage.getItem(PLAY_COUNT_KEY) === day) {
+          pendingPlayDay = "";
+          return;
+        }
+      } catch {
+        // Storage may be unavailable; still deduplicate during this page session.
+        if (countedPlayDay === day) {
+          pendingPlayDay = "";
+          return;
+        }
+      }
+      try {
+        if (window.goatcounter.filter()) return;
+        window.goatcounter.count({
+          path: "played-today",
+          title: "Played today",
+          event: true,
+          no_session: true,
+          referrer: ""
+        });
+        countedPlayDay = day;
+        pendingPlayDay = "";
+        try { localStorage.setItem(PLAY_COUNT_KEY, day); } catch {}
+      } catch {
+        // Analytics must never interrupt the game.
+      }
+    }
+
+    function countDailyPlay() {
+      const now = new Date();
+      pendingPlayDay = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0")
+      ].join("-");
+      flushDailyPlayCount();
+    }
+
+    document.getElementById("goatcounter-script")
+      .addEventListener("load", flushDailyPlayCount);
+
     let beatClock = null;
     const TRANSCRIPTION_MODEL = "voxtral-mini-latest";
     const RHYME_AGENT_ID = "ag_01a0a1b2d39e7676a738829559ea16a0";
@@ -385,6 +439,7 @@
           throw new Error("This browser cannot record WebM/Opus audio.");
         }
         clock.start();
+        countDailyPlay();
         const firstPlayerStart = await computerBar(retry || noComputerMode.checked ? "" : "Name: " + currentName.name + ".", thisRun);
         if (firstPlayerStart === null) return;
         await runGame(thisRun, firstPlayerStart);
