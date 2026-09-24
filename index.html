@@ -139,10 +139,45 @@
       border-left-color: var(--red);
       color: var(--red);
     }
+
+    #bestsButton { display: block; margin: 0 0 16px; font-size: 15px; }
+    #bestsPanel {
+      position: fixed; inset: 0 auto 0 0; margin: 0;
+      width: min(560px, 100%); max-width: 100%; height: 100dvh;
+      max-height: 100dvh; border: 0; padding: 20px 14px;
+      color: var(--ink); background: #fff; text-align: left;
+      overflow-y: auto;
+    }
+    #bestsPanel[open] { animation: slideBestsIn 180ms ease-out; }
+    #bestsPanel::backdrop { background: rgb(0 0 0 / 45%); }
+    .bests-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .bests-heading h2 { margin: 0; }
+    #bestsPanel table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 14px; }
+    #bestsPanel th, #bestsPanel td { padding: 12px 5px; border-bottom: 1px solid #ddd; text-align: center; overflow-wrap: anywhere; }
+    #bestsPanel th:first-child { width: 43%; text-align: left; }
+    #bestsPanel thead { background: var(--panel); }
+    #bestsPanel .best-row { background: #eaf1ff; font-weight: bold; }
+    #bestsNote { color: var(--muted); font-size: 14px; line-height: 1.4; }
+    @keyframes slideBestsIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+    @media (prefers-reduced-motion: reduce) { #bestsPanel[open] { animation: none; } }
   </style>
 </head>
 
 <body>
+  <button id="bestsButton" type="button" aria-haspopup="dialog" aria-controls="bestsPanel">Personal bests</button>
+  <dialog id="bestsPanel" aria-labelledby="bestsTitle">
+    <div class="bests-heading">
+      <h2 id="bestsTitle">Personal bests</h2>
+      <button id="closeBestsButton" type="button" aria-label="Close personal bests">Close</button>
+    </div>
+    <p id="bestsNote">Your successful rhymes, saved in this browser. Computer words do not count. Totals exclude the starting name and count homophones once.</p>
+    <p id="bestsStorageWarning" hidden>Scores cannot be saved in this browser right now. They will last only while this page stays open.</p>
+    <table>
+      <thead><tr><th scope="col">Name group</th><th scope="col">Normal</th><th scope="col">No Computer</th><th scope="col">Total rhymes</th></tr></thead>
+      <tbody id="bestsRows"></tbody>
+    </table>
+  </dialog>
+
   <h1>Beastie Rap Practice</h1>
 
   <div id="credentialArea">
@@ -344,6 +379,115 @@
     let usedRhymeKeys = [];
     let usedRhymeWords = [];
     let retrySnapshot = null;
+
+    const BESTS_KEY = "beastie-rap-personal-bests-v1";
+    let scoreStore = { bests: {}, pending: {} };
+    let scoreRound = null;
+    const bestsPanel = document.getElementById("bestsPanel");
+    const bestsButton = document.getElementById("bestsButton");
+
+    function readScoreStore() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(BESTS_KEY));
+        if (saved && saved.bests && saved.pending &&
+            typeof saved.bests === "object" && typeof saved.pending === "object") {
+          scoreStore = saved;
+        }
+      } catch {}
+      return scoreStore;
+    }
+
+    function saveScoreStore() {
+      try {
+        localStorage.setItem(BESTS_KEY, JSON.stringify(scoreStore));
+        document.getElementById("bestsStorageWarning").hidden = true;
+      } catch {
+        document.getElementById("bestsStorageWarning").hidden = false;
+      }
+    }
+
+    // Keep the current round separate from previous bests so Undo can lower it.
+    // Each tab has its own round ID; records from other tabs are preserved.
+    function beginScoreRound() {
+      readScoreStore();
+      if (scoreRound) {
+        const key = scoreRound.groupId + ":" + scoreRound.mode;
+        scoreStore.bests[key] = Math.max(scoreStore.bests[key] || 0, scoreRound.count);
+        delete scoreStore.pending[scoreRound.id];
+      }
+      const id = Array.from(crypto.getRandomValues(new Uint32Array(4)), n => n.toString(16)).join("-");
+      scoreRound = {
+        id, groupId: currentName.groupId,
+        mode: noComputerMode.checked ? "solo" : "normal", count: 0
+      };
+      scoreStore.pending[id] = { ...scoreRound };
+      saveScoreStore();
+    }
+
+    function setPlayerScore(count) {
+      if (!scoreRound) return;
+      readScoreStore();
+      scoreRound.count = count;
+      scoreStore.pending[scoreRound.id] = { ...scoreRound };
+      saveScoreStore();
+    }
+
+    function renderPersonalBests() {
+      const data = window.BEASTIE_RAP_DATA;
+      if (!data) return;
+      const saved = readScoreStore();
+      const bests = { ...saved.bests };
+      for (const record of Object.values(saved.pending)) {
+        if (!record || !Number.isSafeInteger(record.count) || record.count < 0) continue;
+        const key = record.groupId + ":" + record.mode;
+        bests[key] = Math.max(bests[key] || 0, record.count);
+      }
+      const rows = data.groups.map(group => {
+        const names = data.names.filter(name => name.groupId === group.id)
+          .map(name => name.name).sort((a, b) => a.localeCompare(b));
+        if (!names.length) return null;
+        const totals = [...new Set(names.map(name => data.getRhymeChoicesForName(name).length))]
+          .sort((a, b) => a - b);
+        return {
+          label: names.join("/"),
+          normal: bests[group.id + ":normal"] || 0,
+          solo: bests[group.id + ":solo"] || 0,
+          total: totals.length === 1 ? String(totals[0]) : totals[0] + "–" + totals[totals.length - 1]
+        };
+      }).filter(Boolean).sort((a, b) => a.label.localeCompare(b.label));
+      const body = document.getElementById("bestsRows");
+      body.replaceChildren();
+      function addRow(label, normal, solo, total, isBest = false) {
+        const tr = document.createElement("tr");
+        if (isBest) tr.className = "best-row";
+        [label, normal || "—", solo || "—", total].forEach((value, index) => {
+          const cell = document.createElement(index === 0 ? "th" : "td");
+          if (index === 0) cell.scope = "row";
+          cell.textContent = value;
+          tr.appendChild(cell);
+        });
+        body.appendChild(tr);
+      }
+      addRow("Best", Math.max(0, ...rows.map(row => row.normal)),
+        Math.max(0, ...rows.map(row => row.solo)), "—", true);
+      rows.forEach(row => addRow(row.label, row.normal, row.solo, row.total));
+    }
+
+    bestsButton.addEventListener("click", () => {
+      renderPersonalBests();
+      bestsPanel.showModal();
+    });
+    document.getElementById("closeBestsButton").addEventListener("click", () => bestsPanel.close());
+    bestsPanel.addEventListener("click", event => {
+      if (event.target === bestsPanel && event.clientX > bestsPanel.getBoundingClientRect().right) {
+        bestsPanel.close();
+      }
+    });
+    window.addEventListener("storage", event => {
+      if (event.key === BESTS_KEY && bestsPanel.open) renderPersonalBests();
+    });
+
+
     const wrongAnswerButton = document.getElementById("wrongAnswerButton");
     wrongAnswerButton.addEventListener("click", retryLastTurn);
 
@@ -402,7 +546,11 @@
         currentName = BEASTIE_RAP_DATA.getNameRecord(nameSelection.value)
           || BEASTIE_RAP_DATA.pickRandomName();
       }
+      if (retry && scoreRound) {
+        noComputerMode.checked = scoreRound.mode === "solo";
+      }
       if (!retry) {
+        beginScoreRound();
         usedRhymeKeys = [];
         usedRhymeWords = [];
         retrySnapshot = null;
@@ -477,6 +625,7 @@
         }
         wrongAnswerButton.hidden = true;
         const turnSnapshot = {
+          playerScore: scoreRound?.count || 0,
           keys: [...usedRhymeKeys],
           words: [...usedRhymeWords],
           historyLength: historyItemsElement.children.length
@@ -521,6 +670,7 @@
         }
 
         markRhymeUsed(playerChoice);
+        setPlayerScore((scoreRound?.count || 0) + 1);
         addLog("player", "Your rhyme: " + playerChoice.word);
         await speakText(playerChoice.word);
         if (!isCurrentRun(thisRun)) return;
@@ -831,6 +981,7 @@
       const snapshot = retrySnapshot;
       // Invalidate in-flight requests, recording, speech, and queued beeps.
       stopApp();
+      setPlayerScore(snapshot.playerScore);
       usedRhymeKeys = [...snapshot.keys];
       usedRhymeWords = [...snapshot.words];
       while (historyItemsElement.children.length > snapshot.historyLength) {
@@ -844,6 +995,7 @@
     }
 
     function setControls(isRunning) {
+      bestsButton.disabled = isRunning;
       changeKeyButton.disabled = isRunning;
       if (!isRunning) wrongAnswerButton.hidden = !retrySnapshot;
       nameSelection.disabled = isRunning;
@@ -931,5 +1083,3 @@
   </script>
 </body>
 </html>
-
-
