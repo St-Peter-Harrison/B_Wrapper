@@ -228,6 +228,13 @@
     </label>
     <p id="computerModeHelp" style="font-size: 14px; color: var(--muted); margin: 8px 0 0">In computer mode, the computer randomly removes a rhyme each round, simulating a real game. Check this box to practice without the computer.</p>
   </div>
+  <div style="margin: 12px 0">
+    <label for="endlessMode">
+      <input id="endlessMode" type="checkbox" autocomplete="off" style="width: auto; margin: 0 6px 0 0">
+      Endless Mode
+    </label>
+    <p style="font-size: 14px; color: var(--muted); margin: 8px 0 0">Automatically start a new name after each round. Say “End game” to stop.</p>
+  </div>
   <button id="startButton" type="submit" form="apiKeyForm">Start Game</button>
   <button id="stopButton" disabled>Stop</button>
   <button id="redoButton" hidden>Redo</button>
@@ -364,6 +371,9 @@
     const nameSelection = document.getElementById("nameSelection");
     const noComputerMode = document.getElementById("noComputerMode");
     noComputerMode.checked = false;
+    const endlessMode = document.getElementById("endlessMode");
+    endlessMode.checked = false;
+    let consecutiveNoInput = 0;
     const stopButton = document.getElementById("stopButton");
     const currentNameElement = document.getElementById("currentName");
     const statusElement = document.getElementById("status");
@@ -408,9 +418,9 @@
 
     // Keep the current round separate from previous bests so Undo can lower it.
     // Each tab has its own round ID; records from other tabs are preserved.
-    function beginScoreRound() {
+    function beginScoreRound(commitPrevious = true) {
       readScoreStore();
-      if (scoreRound) {
+      if (scoreRound && commitPrevious) {
         const key = scoreRound.groupId + ":" + scoreRound.mode;
         scoreStore.bests[key] = Math.max(scoreStore.bests[key] || 0, scoreRound.count);
         delete scoreStore.pending[scoreRound.id];
@@ -556,6 +566,7 @@
         retrySnapshot = null;
         historyItemsElement.innerHTML = "";
       }
+      consecutiveNoInput = 0;
       wrongAnswerButton.hidden = true;
 
       currentNameElement.textContent = currentName.name;
@@ -618,6 +629,56 @@
       return start + clock.period;
     }
 
+    function isEndGameCommand(transcript) {
+      return /\bend\s+(?:the\s+)?game\b/i.test(transcript);
+    }
+
+    async function completeRound(thisRun, cleared = false) {
+      const message = cleared ? "YOU CLEARED THE GROUP" : "ROUND OVER";
+      statusElement.textContent = message;
+      await speakText(cleared ? "You cleared the group!" : "You lost this round.");
+      if (!isCurrentRun(thisRun)) return null;
+      if (!endlessMode.checked) {
+        finishRound(message);
+        return null;
+      }
+
+      const count = scoreRound?.count || 0;
+      const summary = "Last round you got " + count + (count === 1 ? " rhyme." : " rhymes.");
+      addLog("computer", summary);
+      await speakText(summary);
+      if (!isCurrentRun(thisRun)) return null;
+
+      let nextName;
+      do {
+        nextName = BEASTIE_RAP_DATA.pickRandomName();
+      } while (nextName.name === currentName.name && BEASTIE_RAP_DATA.names.length > 1);
+      currentNameElement.textContent = nextName.name;
+      const announcement = "The name is " + nextName.name + ".";
+      addLog("computer", announcement);
+      await speakText(announcement);
+      if (!isCurrentRun(thisRun)) return null;
+
+      // Keep the beat running and wait five real seconds before the next computer bar.
+      statusElement.textContent = "NEXT ROUND";
+      const clock = beatClock;
+      const countdownStart = clock.context.currentTime;
+      for (let remaining = 5; remaining > 0; remaining -= 1) {
+        countdownElement.textContent = remaining;
+        if (!await clock.waitUntil(countdownStart + 6 - remaining, () => isCurrentRun(thisRun))) return null;
+      }
+      countdownElement.textContent = "";
+      if (!isCurrentRun(thisRun)) return null;
+      currentName = nextName;
+      // Retain the previous round's reversible record until a new attempt begins.
+      beginScoreRound(false);
+      usedRhymeKeys = [];
+      usedRhymeWords = [];
+      consecutiveNoInput = 0;
+      renderUsedRhymes();
+      return await computerBar(noComputerMode.checked ? "" : "Name: " + currentName.name + ".", thisRun);
+    }
+
     async function runGame(thisRun, playerStart) {
       while (isCurrentRun(thisRun)) {
         if (beatClock.context.currentTime - playerStart > 0.12) {
@@ -625,11 +686,14 @@
         }
         wrongAnswerButton.hidden = true;
         const turnSnapshot = {
+          name: currentName,
+          scoreRound: scoreRound ? { ...scoreRound } : null,
           playerScore: scoreRound?.count || 0,
           keys: [...usedRhymeKeys],
           words: [...usedRhymeWords],
           historyLength: historyItemsElement.children.length
         };
+        retrySnapshot = turnSnapshot;
         const audioBlob = await recordAudio(playerStart + beatClock.period, thisRun);
         if (!audioBlob || !isCurrentRun(thisRun)) return;
 
@@ -640,12 +704,30 @@
         if (!isCurrentRun(thisRun)) return;
 
         if (!transcript.trim()) {
-          addLog("failure", "No speech was detected.");
-          finishRound("ROUND OVER");
-          return;
+          consecutiveNoInput += 1;
+          if (consecutiveNoInput >= 2) {
+            addLog("failure", "No input detected twice. Game ended.");
+            await speakText("No input detected. Game ended.");
+            if (!isCurrentRun(thisRun)) return;
+            finishRound("GAME OVER");
+            return;
+          }
+          addLog("failure", "Detected no input, try again?");
+          statusElement.textContent = "Detected no input, try again?";
+          await speakText("Detected no input, try again?");
+          if (!isCurrentRun(thisRun)) return;
+          playerStart = await computerBar("", thisRun);
+          if (playerStart === null) return;
+          continue;
         }
 
+        consecutiveNoInput = 0;
         addLog("player", "You: " + transcript);
+        if (isEndGameCommand(transcript)) {
+          addLog("computer", "Game ended.");
+          finishRound("GAME OVER");
+          return;
+        }
 
         const choices = BEASTIE_RAP_DATA.getRhymeChoicesForName(
           currentName.name,
@@ -653,8 +735,9 @@
         );
 
         if (choices.length === 0) {
-          finishRound("YOU CLEARED THE GROUP");
-          return;
+          playerStart = await completeRound(thisRun, true);
+          if (playerStart === null) return;
+          continue;
         }
 
         statusElement.textContent = "AI is making a guess…";
@@ -663,10 +746,9 @@
 
         if (!playerChoice) {
           addLog("failure", "No clear approved rhyme completed that sentence.");
-          await speakText("No clear rhyme.");
-          if (!isCurrentRun(thisRun)) return;
-          finishRound("ROUND OVER");
-          return;
+          playerStart = await completeRound(thisRun);
+          if (playerStart === null) return;
+          continue;
         }
 
         markRhymeUsed(playerChoice);
@@ -678,8 +760,9 @@
         if (noComputerMode.checked) {
           const remaining = BEASTIE_RAP_DATA.getRhymeChoicesForName(currentName.name, usedRhymeKeys);
           if (remaining.length === 0) {
-            finishRound("YOU CLEARED THE GROUP");
-            return;
+            playerStart = await completeRound(thisRun, true);
+            if (playerStart === null) return;
+            continue;
           }
           playerStart = await computerBar("", thisRun);
           if (playerStart === null) return;
@@ -692,8 +775,9 @@
         );
 
         if (!computerChoice) {
-          finishRound("YOU CLEARED THE GROUP");
-          return;
+          playerStart = await completeRound(thisRun, true);
+          if (playerStart === null) return;
+          continue;
         }
 
         const computerWord = computerChoice.display;
@@ -981,6 +1065,9 @@
       const snapshot = retrySnapshot;
       // Invalidate in-flight requests, recording, speech, and queued beeps.
       stopApp();
+      currentName = snapshot.name;
+      scoreRound = snapshot.scoreRound ? { ...snapshot.scoreRound } : null;
+      currentNameElement.textContent = currentName.name;
       setPlayerScore(snapshot.playerScore);
       usedRhymeKeys = [...snapshot.keys];
       usedRhymeWords = [...snapshot.words];
@@ -996,6 +1083,7 @@
 
     function setControls(isRunning) {
       bestsButton.disabled = isRunning;
+      endlessMode.disabled = isRunning;
       changeKeyButton.disabled = isRunning;
       if (!isRunning) wrongAnswerButton.hidden = !retrySnapshot;
       nameSelection.disabled = isRunning;
