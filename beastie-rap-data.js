@@ -2445,49 +2445,16 @@
       .some(choice => choice.key === rhymeKey);
   }
 
-  // Random order without replacement: every rhyme group gets a turn.
-  const randomizerStorageKey = "beastie-rap-group-order-v1";
-  const eligibleGroupIds = [...new Set(names.map(item => item.groupId))];
-  let remainingGroupIds = [];
-  let lastGroupId = null;
-
-  try {
-    const saved = JSON.parse(localStorage.getItem(randomizerStorageKey));
-    if (saved && Array.isArray(saved.remaining) &&
-        saved.remaining.every(id => eligibleGroupIds.includes(id)) &&
-        new Set(saved.remaining).size === saved.remaining.length &&
-        eligibleGroupIds.includes(saved.last)) {
-      remainingGroupIds = saved.remaining;
-      lastGroupId = saved.last;
-    }
-  } catch {
-    // Private browsing or unavailable storage still allows session randomization.
-  }
-
+  // Independent, equally likely picks from every starting name.
+  // Reject the incomplete upper range to avoid modulo bias.
   function pickRandomName() {
-    if (!remainingGroupIds.length) {
-      remainingGroupIds = eligibleGroupIds.slice();
-      for (let i = remainingGroupIds.length - 1; i > 0; i -= 1) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [remainingGroupIds[i], remainingGroupIds[j]] =
-          [remainingGroupIds[j], remainingGroupIds[i]];
-      }
-      // Avoid repeating the final group when a fresh shuffle begins.
-      const last = remainingGroupIds.length - 1;
-      if (last > 0 && remainingGroupIds[last] === lastGroupId) {
-        const j = Math.floor(Math.random() * last);
-        [remainingGroupIds[last], remainingGroupIds[j]] =
-          [remainingGroupIds[j], remainingGroupIds[last]];
-      }
-    }
-    const groupId = remainingGroupIds.pop();
-    lastGroupId = groupId;
-    try {
-      localStorage.setItem(randomizerStorageKey,
-        JSON.stringify({ remaining: remainingGroupIds, last: lastGroupId }));
-    } catch {}
-    const candidates = names.filter(item => item.groupId === groupId);
-    return candidates[Math.floor(Math.random() * candidates.length)];
+    const range = 0x100000000;
+    const limit = range - (range % names.length);
+    const sample = new Uint32Array(1);
+    do {
+      window.crypto.getRandomValues(sample);
+    } while (sample[0] >= limit);
+    return names[sample[0] % names.length];
   }
 
   function pickRandomRhyme(name, usedRhymes = []) {
