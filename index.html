@@ -10,161 +10,25 @@
           async src="https://gc.zgo.at/count.js"></script>
 
   <style>
-    :root {
-      color-scheme: light;
-      --ink: #172033;
-      --muted: #667085;
-      --panel: #f2f4f7;
-      --blue: #175cd3;
-      --red: #b42318;
-      --green: #067647;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 24px 18px 60px;
-      color: var(--ink);
-      text-align: center;
-      background: #fff;
-    }
-
-    h1 {
-      margin: 0 0 22px;
-    }
-
-    input {
-      width: 100%;
-      padding: 13px;
-      border: 1px solid #98a2b3;
-      border-radius: 8px;
-      font-size: 16px;
-      margin-bottom: 12px;
-    }
-
-    button {
-      padding: 13px 22px;
-      border: 0;
-      border-radius: 8px;
-      font-size: 18px;
-      font-weight: 700;
-      margin: 4px;
-      color: #fff;
-      background: var(--blue);
-    }
-
-    button:disabled {
-      opacity: 0.45;
-    }
-
-    #stopButton {
-      background: #475467;
-    }
-
-    .card {
-      margin-top: 20px;
-      padding: 18px;
-      border-radius: 12px;
-      background: var(--panel);
-    }
-
-    .label {
-      color: var(--muted);
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    #currentName {
-      min-height: 58px;
-      margin-top: 6px;
-      font-size: 48px;
-      font-weight: 800;
-    }
-
-    #status {
-      min-height: 34px;
-      margin-top: 22px;
-      font-size: 28px;
-      font-weight: 800;
-    }
-
-    #countdown {
-      min-height: 64px;
-      margin: 8px 0;
-      font-size: 58px;
-      font-weight: 800;
-    }
-
-    #usedRhymes {
-      min-height: 25px;
-      margin-top: 8px;
-      line-height: 1.5;
-    }
-
-    #history {
-      margin-top: 24px;
-      text-align: left;
-    }
-
-    #history h2 {
-      margin-bottom: 10px;
-    }
-
-    .log {
-      padding: 11px 12px;
-      margin-bottom: 8px;
-      border-left: 5px solid #98a2b3;
-      border-radius: 7px;
-      background: var(--panel);
-      overflow-wrap: anywhere;
-    }
-
-    .log.player {
-      border-left-color: var(--blue);
-    }
-
-    .log.computer {
-      border-left-color: var(--green);
-    }
-
-    .log.error,
-    .log.failure {
-      border-left-color: var(--red);
-      color: var(--red);
-    }
-
-    #bestsButton { display: block; margin: 0 0 16px; font-size: 15px; }
-    #bestsPanel {
-      position: fixed; inset: 0 auto 0 0; margin: 0;
-      width: min(560px, 100%); max-width: 100%; height: 100dvh;
-      max-height: 100dvh; border: 0; padding: 20px 14px;
-      color: var(--ink); background: #fff; text-align: left;
-      overflow-y: auto;
-    }
-    #bestsPanel[open] { animation: slideBestsIn 180ms ease-out; }
-    #bestsPanel::backdrop { background: rgb(0 0 0 / 45%); }
-    .bests-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-    .bests-heading h2 { margin: 0; }
-    #bestsPanel table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 14px; }
-    #bestsPanel th, #bestsPanel td { padding: 12px 5px; border-bottom: 1px solid #ddd; text-align: center; overflow-wrap: anywhere; }
-    #bestsPanel th:first-child { width: 43%; text-align: left; }
-    #bestsPanel thead { background: var(--panel); }
-    #bestsPanel .best-row { background: #eaf1ff; font-weight: bold; }
-    #bestsNote { color: var(--muted); font-size: 14px; line-height: 1.4; }
-    @keyframes slideBestsIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
-    @media (prefers-reduced-motion: reduce) { #bestsPanel[open] { animation: none; } }
-  </style>
+:root{color-scheme:light;--paper:#f7f3e9;--ink:#211b2c;--orange:#e76942;--cream:#ffeed8;--line:#d9d2c6;--muted:#625b64;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:var(--paper)}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0}.shell{width:min(1100px,91%);margin:auto;padding-bottom:48px}
+header,.brand,.session-title,.buttons,footer,.bests-heading{display:flex;align-items:center}header,.session-title,footer,.bests-heading{justify-content:space-between}header{padding:22px 0;border-bottom:1px solid var(--line)}.brand{gap:10px;font-size:13px;font-weight:900;line-height:.98;letter-spacing:.04em}.brandmark{display:grid;place-items:center;border-radius:50%;width:36px;height:36px;background:var(--ink);color:var(--cream);font-size:18px}
+button,select,input,summary{font:inherit}button,summary,select{cursor:pointer}button{min-height:44px;border-radius:7px;border:1px solid transparent;font-weight:700;padding:9px 15px}button:disabled{opacity:.45;cursor:default}button:focus-visible,summary:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #3ab6ae;outline-offset:3px}#bestsButton,#closeBestsButton{background:transparent;border-color:var(--line);color:var(--ink)}
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:6%;align-items:center;margin:46px 0}.kicker,.label,.sleeve b{font-size:10px;letter-spacing:.16em;font-weight:750;text-transform:uppercase}.hero .kicker{color:#923c25}.kicker i,.label i{display:inline-block;background:var(--orange);width:8px;height:8px;border-radius:50%;margin-right:4px}h1{font-size:clamp(54px,7.8vw,106px);line-height:.92;letter-spacing:-.075em;margin:20px 0 17px}h1 em{display:block;color:var(--orange);font-style:normal}.hero p{margin:0;color:var(--muted);line-height:1.55}.sleeve{position:relative;background:#e9d6b7;border-radius:5px;display:grid;place-items:center;aspect-ratio:2/1;overflow:hidden}.sleeve b,.sleeve strong{position:absolute}.sleeve b{bottom:12px;left:14px;color:#665034;font-size:9px}.sleeve strong{right:4%;top:2%;font-size:38px;color:var(--cream);font-weight:400}.disc{width:41%;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;transform:rotate(-14deg);background:conic-gradient(from 10deg,transparent 10%,#ffffff12 18%,transparent 32%,transparent 65%,#ffffff12 75%,transparent 88%),repeating-radial-gradient(circle,#221c2d 0 3px,#17141c 4px 5px,#39313b 6px);box-shadow:6px 9px 18px #402d272b}.disc span{display:grid;place-content:center;border-radius:50%;width:32%;aspect-ratio:1;background:var(--orange);font-weight:900;color:#241c28;font-size:clamp(13px,2.4vw,32px);letter-spacing:-.1em}
+.session{background:#231d2d;color:#faf4e9;border-radius:10px;padding:clamp(18px,3.3vw,40px);box-shadow:0 12px 32px #38263515}.session-title{border-bottom:1px solid #504652;padding-bottom:13px;margin-bottom:20px;color:#efb9a1}.meter{color:#f4936f;letter-spacing:2px}.console{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}.setup label{display:block;font-size:14px;font-weight:650;margin-bottom:5px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.setup input:not([type=checkbox]),.setup select{min-height:44px;width:100%;background:#302937;color:#fff5ea;border:1px solid #6d626e;padding:9px;border-radius:5px;font-size:16px}.setup input::placeholder{color:#cbc2ca}.options{margin-top:14px}.options details{margin-top:10px}.options summary{min-height:40px;padding:8px 0;font-weight:650}.options p,.options small,footer small{color:#d1c7cf;font-size:13px;line-height:1.5}.options p{margin:4px 0 12px}.options input[type=checkbox]{accent-color:var(--orange);width:18px;height:18px;vertical-align:middle}.options details label{margin-top:8px}
+.stage{background:#302838;border:1px solid #4d414f;border-radius:7px;padding:20px;overflow-wrap:anywhere}.stage .label{color:#ddc6bd}#currentName{font-size:clamp(28px,4vw,52px);font-weight:780;letter-spacing:-.045em;line-height:1.1;margin:8px 0}#status{color:#ffd2b9;font-weight:650}#countdown{font-size:44px;font-weight:750;font-variant-numeric:tabular-nums}#countdown:empty{display:none}#usedRhymes,#unusedRhymes{margin-top:4px;line-height:1.5}.stage .label:not(:first-child),#unusedSection{margin-top:16px}
+footer{margin-top:18px;gap:12px;border-top:1px solid #504652;padding-top:16px;flex-wrap:wrap}.buttons{gap:8px;flex-wrap:wrap}.buttons button,#changeKeyButton{background:#3d3443;color:#fff4e7;border-color:#726473}#startButton{background:#ff956c;color:#211825;border-color:transparent}#stopButton:disabled{display:none}#keyReady{margin:0}
+#history,#suggestionSection{margin:23px 0}#history h2,.bests-heading h2{font-size:24px;letter-spacing:-.04em;margin:0 0 10px}#historyItems:empty::before{content:"Your round will appear here.";color:var(--muted);font-size:14px}.log{padding:10px 12px;border-left:3px solid #a36542;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.log.player{border-left-color:#3b796e}.log.failure,.log.error{color:#9c3524;border-left-color:#a33d25}#suggestionSection{border-top:1px solid var(--line);padding-top:15px}#suggestionSection a{color:#913e28;font-weight:700}#suggestionSection p,#bestsNote{color:var(--muted);font-size:14px;line-height:1.45}
+#bestsPanel{inset:0 auto 0 0;margin:0;width:min(500px,100%);max-width:100%;height:100dvh;max-height:100dvh;border:0;background:var(--paper);color:var(--ink);padding:24px 16px;overflow:auto}#bestsPanel::backdrop{background:#1b142aa8}.bests-heading h2{margin:0}table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:14px}td,th{padding:10px 4px;border-bottom:1px solid var(--line);text-align:center;overflow-wrap:anywhere}th:first-child{text-align:left;width:42%}.best-row{background:#ecd8be;font-weight:750}@media(prefers-reduced-motion:no-preference){#bestsPanel[open]{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(-100%)}}}
+body:has(#stopButton:not(:disabled)) .hero,body:has(#stopButton:not(:disabled)) .setup,body:has(#stopButton:not(:disabled)) #startButton{display:none}body:has(#stopButton:not(:disabled)) .console{display:block}body:has(#stopButton:not(:disabled)) .session{margin-top:16px}
+@media(max-width:650px){header{padding:12px 0}.hero{margin:22px 0;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:12px}.hero p{font-size:13px}.sleeve{aspect-ratio:1/1.1}.disc{width:78%}.sleeve b{left:7px;bottom:7px;font-size:7px}.sleeve strong{font-size:20px}.hero h1{margin:12px 0;font-size:clamp(46px,11vw,68px)}.console{grid-template-columns:1fr;gap:12px}.stage{padding:14px}.session-title{margin-bottom:14px}.session{padding:16px}.buttons button{min-height:45px}footer{margin-top:12px}}
+</style>
 </head>
 
 <body>
-  <button id="bestsButton" type="button" aria-haspopup="dialog" aria-controls="bestsPanel">Personal bests</button>
+<div class="shell">
+<header><div class="brand"><span class="brandmark" aria-hidden="true">♫</span> BEASTIE<br>RAP</div>
+<button id="bestsButton" type="button" aria-haspopup="dialog" aria-controls="bestsPanel">Personal bests ↗</button></header>
   <dialog id="bestsPanel" aria-labelledby="bestsTitle">
     <div class="bests-heading">
       <h2 id="bestsTitle">Personal bests</h2>
@@ -178,9 +42,13 @@
     </table>
   </dialog>
 
-  <h1>Beastie Rap Practice</h1>
-
-  <div id="credentialArea">
+<main>
+<section class="hero"><div><span class="kicker"><i></i> IMPROV PRACTICE</span>
+<h1>Beastie <em>Rap.</em></h1>
+<p>Catch the beat. Set up the rhyme.<br>Let your teammate finish the line.</p></div>
+<div class="sleeve" aria-hidden="true"><div class="disc"><span>BR</span></div><b>SIDE A · 01</b><strong>✳</strong></div></section>
+<article class="session"><div class="session-title"><span class="kicker">THE SESSION</span><span class="meter" aria-hidden="true">▂▅▇▃▆▂</span></div>
+<div class="console"><section class="setup" aria-label="Session settings">  <div id="credentialArea">
     <form id="apiKeyForm" method="post" autocomplete="on" onsubmit="return false">
       <label for="apiKey">Mistral API key</label>
       <input
@@ -199,15 +67,35 @@
     </p>
   </div>
 
-  <div style="margin-bottom: 12px">
+<div class="pair">  <div>
+    <label for="nameSelection">Name:</label>
+    <select id="nameSelection" autocomplete="off">
+      <option value="" selected>Random</option>
+    </select>
+  </div>
+  <div>
     <label for="speed">Speed:</label>
-    <select id="speed" style="font-size: 16px; padding: 8px">
+    <select id="speed">
       <option value="1">100% — Normal</option>
       <option value="0.75">75% — Slower</option>
       <option value="0.5">50% — Slowest</option>
     </select>
   </div>
-  <details style="margin: 12px 0">
+</div><details class="options"><summary>Game options</summary>  <div>
+    <label for="noComputerMode">
+      <input id="noComputerMode" aria-describedby="computerModeHelp" type="checkbox" autocomplete="off">
+      No Computer Mode
+    </label>
+    <p id="computerModeHelp">In computer mode, the computer randomly removes a rhyme each round, simulating a real game. Check this box to practice without the computer.</p>
+  </div>
+  <div>
+    <label for="endlessMode">
+      <input id="endlessMode" type="checkbox" autocomplete="off">
+      Endless Mode
+    </label>
+    <p>Automatically start a new name after each round. Say “End game” to stop.</p>
+  </div>
+  <details>
     <summary>Beat timing</summary>
     <label for="turnSeconds">Seconds per turn at normal speed</label>
     <input id="turnSeconds" type="number" min="2.1" max="10" step="0.001" value="2.85">
@@ -215,57 +103,37 @@
     <input id="trackOffset" type="number" min="0" max="10" step="0.01" value="0.29">
     <small>Adjust between rounds if cues drift or start between beats.</small>
   </details>
-  <div style="margin-bottom: 12px">
-    <label for="nameSelection">Name:</label>
-    <select id="nameSelection" autocomplete="off" style="font-size: 16px; padding: 8px; max-width: 100%">
-      <option value="" selected>Random</option>
-    </select>
-  </div>
-  <div style="margin: 12px 0">
-    <label for="noComputerMode">
-      <input id="noComputerMode" aria-describedby="computerModeHelp" type="checkbox" autocomplete="off" style="width: auto; margin: 0 6px 0 0">
-      No Computer Mode
-    </label>
-    <p id="computerModeHelp" style="font-size: 14px; color: var(--muted); margin: 8px 0 0">In computer mode, the computer randomly removes a rhyme each round, simulating a real game. Check this box to practice without the computer.</p>
-  </div>
-  <div style="margin: 12px 0">
-    <label for="endlessMode">
-      <input id="endlessMode" type="checkbox" autocomplete="off" style="width: auto; margin: 0 6px 0 0">
-      Endless Mode
-    </label>
-    <p style="font-size: 14px; color: var(--muted); margin: 8px 0 0">Automatically start a new name after each round. Say “End game” to stop.</p>
-  </div>
-  <button id="startButton" type="submit" form="apiKeyForm">Start Game</button>
-  <button id="stopButton" disabled>Stop</button>
-  <button id="redoButton" hidden>Redo</button>
-  <button id="wrongAnswerButton" hidden>That answer was wrong</button>
-  <p>Three beeps count you in. Start speaking on the higher third beep.</p>
-
-  <section class="card" aria-live="polite">
-    <div class="label">Current name</div>
-    <div id="currentName">—</div>
+</details></section>  <section class="stage" aria-live="polite">
+    <div class="label"><i></i> Current name</div>
+    <div id="currentName">Ready to rhyme?</div>
 
     <div id="status">Stopped</div>
     <div id="countdown"></div>
 
     <div class="label">Used rhymes</div>
     <div id="usedRhymes">None</div>
-    <div id="unusedSection" hidden style="margin-top: 20px">
+    <div id="unusedSection" hidden>
       <div class="label">Unused rhymes</div>
-      <div id="unusedRhymes" style="margin-top: 8px; line-height: 1.5"></div>
+      <div id="unusedRhymes"></div>
     </div>
   </section>
 
-  <section id="suggestionSection" class="card">
-    <a id="suggestRhymeLink" href="https://docs.google.com/forms/d/e/1FAIpQLSclop2eNjCwKijJAAHHcuzGIvZwgNXbPwSpWlDAqEx39skEWg/viewform?usp=pp_url" target="_blank" rel="noopener noreferrer" style="color: var(--blue); font-weight: 700; display: inline-block; padding: 10px">Suggest a missing rhyme ↗</a>
-    <p style="margin: 4px 0; color: var(--muted)">Opens a form in a new tab. Suggestions are reviewed before being added.</p>
-  </section>
-
-  <section id="history">
+</div>
+<footer><div class="buttons">  <button id="startButton" type="submit" form="apiKeyForm">Start Game</button>
+  <button id="stopButton" disabled>Stop</button>
+  <button id="redoButton" hidden>Redo</button>
+  <button id="wrongAnswerButton" hidden>That answer was wrong</button>
+</div><small>Start speaking on the higher third beep.</small></footer></article>  <section id="history">
     <h2>Round history</h2>
     <div id="historyItems"></div>
   </section>
 
+  <section id="suggestionSection" class="card">
+    <a id="suggestRhymeLink" href="https://docs.google.com/forms/d/e/1FAIpQLSclop2eNjCwKijJAAHHcuzGIvZwgNXbPwSpWlDAqEx39skEWg/viewform?usp=pp_url" target="_blank" rel="noopener noreferrer">Suggest a missing rhyme ↗</a>
+    <p>Opens a form in a new tab. Suggestions are reviewed before being added.</p>
+  </section>
+
+</main></div>
   <script src="rhyme-definitions.js?v=3"></script>
   <script src="beastie-rap-data.js?v=crypto-random1"></script>
   <script src="song-part-0.js"></script>
